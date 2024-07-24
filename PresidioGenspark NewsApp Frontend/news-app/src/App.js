@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import RoutesConfig from './routes';
 import './styles/main.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import LoginPrompt from './components/Authentication/LoginPrompt';
 
 const App = () => {
     return (
@@ -13,6 +14,7 @@ const App = () => {
             <AuthProvider>
                 <BrowserRouter>
                     <RoutesConfig />
+                    <LoginPrompt />
                 </BrowserRouter>
             </AuthProvider>
         </GoogleOAuthProvider>

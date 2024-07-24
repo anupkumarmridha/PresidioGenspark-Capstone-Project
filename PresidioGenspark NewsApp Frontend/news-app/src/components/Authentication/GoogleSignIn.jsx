@@ -2,6 +2,7 @@ import React from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import '../../styles/GoogleSignIn.css'; // Import the CSS file
 
 const GoogleSignIn = () => {
     const { setUser, setProfile } = useAuth();
@@ -29,8 +30,11 @@ const GoogleSignIn = () => {
     };
 
     return (
-        <button onClick={() => login()}>Sign in with Google 🚀</button>
+        <button onClick={() => login()} className="google-signin-button">
+            Sign in with Google
+        </button>
     );
 };
 
 export default GoogleSignIn;
+
