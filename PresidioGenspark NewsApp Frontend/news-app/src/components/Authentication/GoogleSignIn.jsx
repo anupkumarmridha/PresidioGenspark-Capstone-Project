@@ -1,4 +1,3 @@
-// src/components/Authentication/GoogleSignIn.jsx
 import React from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
@@ -8,9 +7,9 @@ const GoogleSignIn = () => {
     const { setUser, setProfile } = useAuth();
 
     const login = useGoogleLogin({
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
             setUser(response);
-            fetchProfile(response.access_token);
+            await fetchProfile(response.access_token);
         },
         onError: (error) => console.log('Login Failed:', error)
     });

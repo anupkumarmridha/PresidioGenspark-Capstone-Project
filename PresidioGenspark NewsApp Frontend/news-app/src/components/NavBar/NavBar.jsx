@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SearchBar from './SearchBar';
+import GoogleSignIn from '../Authentication/GoogleSignIn';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/Navbar.css';
-const NavBar = ({ onSearch, onCategoryChange, isLoggedIn, onLogout }) => {
+
+const NavBar = ({ onSearch, onCategoryChange }) => {
+    const { user, profile, logOut } = useAuth();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
 
     const handleProfileMenuToggle = () => setShowProfileMenu(!showProfileMenu);
@@ -20,7 +24,7 @@ const NavBar = ({ onSearch, onCategoryChange, isLoggedIn, onLogout }) => {
                 {/* Add more buttons as needed */}
             </div>
             <div className="navbar-auth">
-                {isLoggedIn ? (
+                {user ? (
                     <div className="profile-menu">
                         <button onClick={handleProfileMenuToggle} className="profile-button">
                             <i className="fas fa-user"></i> Profile
@@ -28,12 +32,12 @@ const NavBar = ({ onSearch, onCategoryChange, isLoggedIn, onLogout }) => {
                         {showProfileMenu && (
                             <div className="profile-dropdown">
                                 <Link to="/profile">Profile</Link>
-                                <button onClick={onLogout}>Logout</button>
+                                <button onClick={logOut}>Logout</button>
                             </div>
                         )}
                     </div>
                 ) : (
-                    <button className="login-button">Login</button>
+                    <GoogleSignIn />
                 )}
             </div>
         </nav>
@@ -41,5 +45,3 @@ const NavBar = ({ onSearch, onCategoryChange, isLoggedIn, onLogout }) => {
 };
 
 export default NavBar;
-
-

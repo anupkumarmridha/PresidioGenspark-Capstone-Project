@@ -8,7 +8,14 @@ import ProtectedRoute from './components/ProtectedRoute';
 const RoutesConfig = () => (
     <Routes>
         <Route path="/signin" element={<GoogleSignIn />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route 
+            path="/profile" 
+            element={
+                <ProtectedRoute>
+                    <Profile />
+                </ProtectedRoute>
+            } 
+        />
         <Route path="/" element={<HomePage />} />
         <Route path="*" element={<HomePage />} /> {/* Default route */}
         {/* Add more routes as needed */}
