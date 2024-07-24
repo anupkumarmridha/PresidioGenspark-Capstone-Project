@@ -1,0 +1,80 @@
+/* ArticleCard.css */
+.article-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+    max-width: 100%; /* Ensure it doesn’t overflow its container */
+}
+
+.article-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.article-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.article-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    height: 300px; /* Adjust height based on your needs */
+    overflow: hidden; /* Ensure content doesn’t overflow */
+}
+
+.article-title {
+    font-size: 1.2em;
+    margin: 0 0 8px 0;
+    color: #333;
+}
+
+.article-author,
+.article-date {
+    font-size: 0.9em;
+    color: #777;
+}
+
+.article-summary {
+    font-size: 0.95em;
+    margin: 12px 0;
+    color: #555;
+    overflow: hidden; /* Ensure the text doesn’t overflow */
+    text-overflow: ellipsis; /* Add ellipsis if needed */
+    display: -webkit-box;
+    -webkit-line-clamp: 5; /* Display approx 150 words */
+    -webkit-box-orient: vertical;
+}
+
+.read-more-link {
+    display: inline-block;
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+.read-more-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+    .article-card {
+        flex: 1 1 100%; /* Single card per row on small screens */
+    }
+}
+
+@media (min-width: 769px) {
+    .article-card {
+        flex: 1 1 calc(50% - 16px); /* Two cards per row with gap */
+    }
+}
