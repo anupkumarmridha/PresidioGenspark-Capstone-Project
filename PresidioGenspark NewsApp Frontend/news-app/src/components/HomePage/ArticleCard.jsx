@@ -12,15 +12,19 @@ const truncateContent = (content, wordLimit) => {
 
 const ArticleCard = ({ article }) => {
     return (
-        <div className="article-card">
-            <img src={article.imageUrl} alt={article.title} className="article-image" />
-            <div className="article-content">
-                <h2 className="article-title">{article.title}</h2>
-                <p className="article-author">By {article.author}</p>
-                <p className="article-date">{article.date} at {article.time}</p>
-                <p className="article-summary">{truncateContent(article.content, 100)}</p>
-                <a href={article.readMoreUrl} className="read-more-link">Read more</a>
-            </div>
+        <div className="article-card-container">
+            <a href={article.readMoreUrl} className="article-card-link">
+                <div className="article-card">
+                    <img src={article.imageUrl} alt={article.title} className="article-image" />
+                    <div className="article-content">
+                        <h2 className="article-title">{article.title}</h2>
+                        <p className="article-author">By {article.author}</p>
+                        <p className="article-date">{article.date} at {article.time}</p>
+                        <p className="article-summary">{truncateContent(article.content, 100)}</p>
+                        <p className="read-more-link">Read more</p>
+                    </div>
+                </div>
+            </a>
         </div>
     );
 };

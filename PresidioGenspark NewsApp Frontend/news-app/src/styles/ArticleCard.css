@@ -1,4 +1,16 @@
 /* ArticleCard.css */
+.article-card-container {
+    display: flex;
+    flex: 1 1 100%; /* Ensure container takes full width of its parent */
+}
+
+.article-card-link {
+    display: block;
+    text-decoration: none; /* Remove default underline from links */
+    color: inherit; /* Inherit text color from the card */
+    width: 100%; /* Ensure the link takes up the full width of the card */
+}
+
 .article-card {
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -68,13 +80,13 @@
 
 /* Responsive layout */
 @media (max-width: 768px) {
-    .article-card {
+    .article-card-container {
         flex: 1 1 100%; /* Single card per row on small screens */
     }
 }
 
 @media (min-width: 769px) {
-    .article-card {
+    .article-card-container {
         flex: 1 1 calc(50% - 16px); /* Two cards per row with gap */
     }
 }
