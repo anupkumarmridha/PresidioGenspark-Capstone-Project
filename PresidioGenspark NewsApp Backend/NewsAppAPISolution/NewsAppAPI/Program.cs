@@ -28,6 +28,7 @@ namespace NewsAppAPI
         private static void RegisterRepositories(IServiceCollection services)
         {
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IArticleRepository, ArticleRepository>();
         }
         #endregion RegisterRepositories
 
@@ -40,6 +41,8 @@ namespace NewsAppAPI
         {
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IArticleService, ArticleService>();
+            services.AddSingleton<IHostedService, ArticleFetchingService>();
 
         }
         #endregion RegisterServices

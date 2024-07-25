@@ -16,6 +16,31 @@ namespace NewsAppAPI.Repositories.Classes
             _context = context;
         }
 
+        #region BulkInsertArticlesAsync
+        public async Task BulkInsertArticlesAsync(IEnumerable<NewsArticle> articles, string category)
+        {
+            // Fetch existing article IDs from the database
+            var existingArticleIds = await _context.NewsArticles
+                .Where(a => a.Status == "Pending")
+                .Select(a => a.Id)
+                .ToListAsync();
+
+            // Convert the list of existing IDs to a HashSet
+            var existingArticleIdSet = new HashSet<int>(existingArticleIds);
+
+            // Filter out articles that already exist in the database
+            var newArticles = articles
+                .Where(a => !existingArticleIdSet.Contains(a.Id))
+                .ToList();
+
+            if (newArticles.Any())
+            {
+                await _context.NewsArticles.AddRangeAsync(newArticles);
+                await _context.SaveChangesAsync();
+            }
+        }
+        #endregion BulkInsertArticlesAsync
+
         #region AddArticleAsync
         public async Task AddArticleAsync(NewsArticle article)
         {
