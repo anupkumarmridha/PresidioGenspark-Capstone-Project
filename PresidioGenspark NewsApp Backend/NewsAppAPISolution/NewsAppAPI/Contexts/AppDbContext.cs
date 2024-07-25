@@ -9,5 +9,6 @@ namespace NewsAppAPI.Contexts
         {
         }
         public DbSet<User> Users { get; set; }
+        public DbSet<NewsArticle> NewsArticles { get; set; }
     }
 }
