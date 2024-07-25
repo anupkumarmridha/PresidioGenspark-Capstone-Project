@@ -36,7 +36,7 @@ namespace NewsAppAPI.Controllers
             var userDto = await _userService.AuthenticateGoogleUserAsync(request.GoogleToken);
             var jwtToken = _tokenService.GenerateToken(userDto);
 
-            return Ok(new { Token = jwtToken });
+            return Ok(new { Token = jwtToken, Profile = userDto }); // Include profile data in the response
         }
     }
 }

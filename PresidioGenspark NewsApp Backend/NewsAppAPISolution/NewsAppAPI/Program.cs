@@ -116,27 +116,13 @@ namespace NewsAppAPI
             services.AddControllers();
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
+            services.AddHttpClient();
 
             //Token operations
             AddJWTTokenSwaggerGen(services);
-            //ValidateToken(services, configuration);
+            ValidateToken(services, configuration);
 
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["TokenKey:JWT"]))
-                };
-            })
-            .AddGoogle(googleOptions =>
+            services.AddAuthentication().AddGoogle(googleOptions =>
             {
                 googleOptions.ClientId = configuration["GoogleAuthSettings:Google:ClientId"];
                 googleOptions.ClientSecret = configuration["GoogleAuthSettings:Google:ClientSecret"];
@@ -176,7 +162,8 @@ namespace NewsAppAPI
 
             app.UseAuthentication();
             app.UseAuthorization();
-
+            
+            app.UseCors("MyCors");
 
             app.MapControllers();
 

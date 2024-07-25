@@ -8,7 +8,11 @@
         public string DisplayName { get; set; }
         public string Role { get; set; }
         public string GoogleId { get; set; }
+        public string GivenName { get; set; } 
+        public string FamilyName { get; set; }
+        public string Picture { get; set; } 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
+
 }
