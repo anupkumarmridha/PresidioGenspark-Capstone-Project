@@ -1,18 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
 import '../../styles/GoogleSignIn.css';
 import { authService } from '../../services/authService';
+import { toast } from 'react-toastify';
 
 const GoogleSignIn = () => {
     const { setUser, setProfile } = useAuth();
+    const [loading, setLoading] = useState(false);
 
     const login = useGoogleLogin({
         onSuccess: async (response) => {
-            await authenticateUser(response.access_token); // Call the API to authenticate
+            setLoading(true); // Set loading state
+            try {
+                await authenticateUser(response.access_token); // Call the API to authenticate
+                toast.success('Login successful!');
+            } catch (error) {
+                toast.error('Authentication failed. Please try again.');
+            } finally {
+                setLoading(false); // Reset loading state
+            }
         },
-        onError: (error) => console.log('Login Failed:', error)
+        onError: (error) => {
+            toast.error('Login failed. Please try again.');
+            console.log('Login Failed:', error);
+        }
     });
 
     const authenticateUser = async (googleToken) => {
@@ -29,12 +41,13 @@ const GoogleSignIn = () => {
             setProfile(profile);
         } catch (err) {
             console.log('Authentication failed:', err);
+            throw err; // Re-throw error to handle it in login onSuccess
         }
     };
 
     return (
-        <button onClick={() => login()} className="google-signin-button">
-            Sign in with Google
+        <button onClick={() => login()} className="google-signin-button" disabled={loading}>
+            {loading ? 'Loading...' : 'Sign in with Google'}
         </button>
     );
 };
