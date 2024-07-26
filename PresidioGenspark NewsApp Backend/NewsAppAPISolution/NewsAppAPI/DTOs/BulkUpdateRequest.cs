@@ -2,7 +2,7 @@
 {
     public class BulkUpdateRequest
     {
-        public IEnumerable<int> Ids { get; set; }
+        public IEnumerable<string> Ids { get; set; }
         public string Status { get; set; }
     }
 }

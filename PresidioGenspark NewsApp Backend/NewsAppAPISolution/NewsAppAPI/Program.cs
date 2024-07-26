@@ -9,6 +9,8 @@ using NewsAppAPI.Repositories.Interfaces;
 using NewsAppAPI.Services.Classes;
 using NewsAppAPI.Services.Interfaces;
 using System.Text;
+using log4net;
+using log4net.Config;
 
 namespace NewsAppAPI
 {
@@ -121,6 +123,7 @@ namespace NewsAppAPI
             services.AddSwaggerGen();
             services.AddHttpClient();
 
+
             //Token operations
             AddJWTTokenSwaggerGen(services);
             ValidateToken(services, configuration);
@@ -149,7 +152,7 @@ namespace NewsAppAPI
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
+            builder.Services.AddLogging(l => l.AddLog4Net());
             // Add services to the container.
             ConfigureServices(builder.Services, builder.Configuration);
 
@@ -162,7 +165,7 @@ namespace NewsAppAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+     
             app.UseAuthentication();
             app.UseAuthorization();
             

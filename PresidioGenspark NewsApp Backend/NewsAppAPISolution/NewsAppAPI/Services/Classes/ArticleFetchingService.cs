@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NewsAppAPI.Models;
 using NewsAppAPI.Services.Interfaces;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using static Google.Apis.Requests.BatchRequest;
 
 namespace NewsAppAPI.Services.Classes
 {
@@ -47,7 +49,7 @@ namespace NewsAppAPI.Services.Classes
                 }
 
                 // Wait for 1 hour before the next fetch
-                await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
+                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
             }
         }
 
@@ -58,29 +60,49 @@ namespace NewsAppAPI.Services.Classes
 
             var fetchTasks = categories.Select(async category =>
             {
-                var response = await httpClient.GetStringAsync($"https://inshortsapi.vercel.app/news?category={category}");
-                var articles = JArray.Parse(response);
-
-                var newsArticles = articles.Select(article => new NewsArticle
+                string response = string.Empty; // Declare response variable at appropriate scope
+                try
                 {
-                    Id = (int)article["id"],
-                    Author = (string)article["author"],
-                    Content = (string)article["content"],
-                    Date = DateTime.Parse((string)article["date"]),
-                    Title = (string)article["title"],
-                    ImageUrl = (string)article["imageUrl"],
-                    ReadMoreUrl = (string)article["readMoreUrl"],
-                    Status = "Pending"
-                }).ToList();
+                    response = await httpClient.GetStringAsync($"https://inshortsapi.vercel.app/news?category={category}");
+                    var json = JToken.Parse(response);
 
-                using (var scope = _scopeFactory.CreateScope())
+                    if (json["data"] is not JArray articles)
+                    {
+                        _logger.LogError($"Expected JArray in 'data' but received {json["data"]?.Type}. Response: {response}");
+                        return;
+                    }
+
+                    var newsArticles = articles.Select(article => new NewsArticle
+                    {
+                        Id = (string)article["id"],  // No parsing needed, assign as string
+                        Author = (string)article["author"],
+                        Content = (string)article["content"],
+                        Date = DateTime.Parse((string)article["date"]),
+                        Title = (string)article["title"],
+                        ImageUrl = (string)article["imageUrl"],
+                        ReadMoreUrl = (string)article["readMoreUrl"],
+                        Status = "Pending"
+                    }).ToList();
+
+                    using (var scope = _scopeFactory.CreateScope())
+                    {
+                        var articleService = scope.ServiceProvider.GetRequiredService<IArticleService>();
+                        await articleService.BulkInsertArticlesAsync(newsArticles, category);
+                    }
+                }
+                catch (JsonReaderException ex)
                 {
-                    var articleService = scope.ServiceProvider.GetRequiredService<IArticleService>();
-                    await articleService.BulkInsertArticlesAsync(newsArticles, category);
+                    _logger.LogError(ex, $"Error parsing JSON for category {category}. Response: {response}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"An error occurred while processing category {category}. Response: {response}");
                 }
             });
 
             await Task.WhenAll(fetchTasks);
         }
+
+
     }
 }

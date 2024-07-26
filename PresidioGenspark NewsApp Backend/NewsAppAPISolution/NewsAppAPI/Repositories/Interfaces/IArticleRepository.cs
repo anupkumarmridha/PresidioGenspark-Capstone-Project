@@ -6,13 +6,13 @@ namespace NewsAppAPI.Repositories.Interfaces
     public interface IArticleRepository
     {
         Task BulkInsertArticlesAsync(IEnumerable<NewsArticle> articles, string category);
-        Task<IEnumerable<NewsArticle>> GetAllPendingArticlesAsync();
+        Task<IEnumerable<NewsArticle>> GetAllArticlesByStatusAsync(string status);
         Task<IEnumerable<NewsArticle>> GetFilteredArticlesAsync(ArticleFilter filter);
-        Task<NewsArticle> GetArticleByIdAsync(int id);
+        Task<NewsArticle> GetArticleByIdAsync(string id);
         Task AddArticleAsync(NewsArticle article);
-        Task DeleteArticleAsync(int id);
-        public Task BulkDeleteArticlesAsync(IEnumerable<int> articleIds);
-        Task BulkUpdateArticlesStatusAsync(IEnumerable<int> ids, string status);
+        Task DeleteArticleAsync(string id);
+        public Task BulkDeleteArticlesAsync(IEnumerable<string> articleIds);
+        Task BulkUpdateArticlesStatusAsync(IEnumerable<string> ids, string status);
     }
 
 }

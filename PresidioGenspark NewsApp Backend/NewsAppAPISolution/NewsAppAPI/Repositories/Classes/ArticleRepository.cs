@@ -26,7 +26,7 @@ namespace NewsAppAPI.Repositories.Classes
                 .ToListAsync();
 
             // Convert the list of existing IDs to a HashSet
-            var existingArticleIdSet = new HashSet<int>(existingArticleIds);
+            var existingArticleIdSet = new HashSet<string>(existingArticleIds);
 
             // Filter out articles that already exist in the database
             var newArticles = articles
@@ -50,7 +50,7 @@ namespace NewsAppAPI.Repositories.Classes
         #endregion AddArticleAsync
 
         #region BulkUpdateArticlesStatusAsync
-        public async Task BulkUpdateArticlesStatusAsync(IEnumerable<int> ids, string status)
+        public async Task BulkUpdateArticlesStatusAsync(IEnumerable<string> ids, string status)
         {
             var articles = await _context.NewsArticles
               .Where(a => ids.Contains(a.Id))
@@ -67,7 +67,7 @@ namespace NewsAppAPI.Repositories.Classes
         #endregion BulkUpdateArticlesStatusAsync
 
         #region DeleteArticlesAsync
-        public async Task DeleteArticleAsync(int id)
+        public async Task DeleteArticleAsync(string id)
         {
             var article = await _context.NewsArticles.FindAsync(id);
             if (article != null)
@@ -79,7 +79,7 @@ namespace NewsAppAPI.Repositories.Classes
         #endregion DeleteArticlesAsync
 
         #region BulkDeleteArticlesAsync
-        public async Task BulkDeleteArticlesAsync(IEnumerable<int> articleIds)
+        public async Task BulkDeleteArticlesAsync(IEnumerable<string> articleIds)
         {
             // Fetch the articles to be deleted
             var articlesToDelete = await _context.NewsArticles
@@ -95,17 +95,17 @@ namespace NewsAppAPI.Repositories.Classes
         }
         #endregion BulkDeleteArticlesAsync
 
-        #region GetAllPendingArticlesAsync
-        public async Task<IEnumerable<NewsArticle>> GetAllPendingArticlesAsync()
+        #region GetAllArticlesByStatusAsync
+        public async Task<IEnumerable<NewsArticle>> GetAllArticlesByStatusAsync(string status)
         {
             return await _context.NewsArticles
-            .Where(a => a.Status == "Pending")
+            .Where(a => a.Status == status)
             .ToListAsync();
         }
         #endregion GetAllPendingArticlesAsync
 
         #region GetArticleByIdAsync
-        public async Task<NewsArticle> GetArticleByIdAsync(int id)
+        public async Task<NewsArticle> GetArticleByIdAsync(string id)
         {
             return await _context.NewsArticles.FindAsync(id);
         }

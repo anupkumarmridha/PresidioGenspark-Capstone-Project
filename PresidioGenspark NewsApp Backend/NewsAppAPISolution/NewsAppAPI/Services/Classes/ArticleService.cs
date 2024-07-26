@@ -19,9 +19,9 @@ namespace NewsAppAPI.Services.Classes
             await _articleRepository.BulkInsertArticlesAsync(articles, category);
         }
 
-        public async Task<IEnumerable<NewsArticle>> GetAllPendingArticlesAsync()
+        public async Task<IEnumerable<NewsArticle>> GetAllArticlesByStatusAsync(string status)
         {
-            return await _articleRepository.GetAllPendingArticlesAsync();
+            return await _articleRepository.GetAllArticlesByStatusAsync(status);
         }
 
         public async Task<IEnumerable<NewsArticle>> GetFilteredArticlesAsync(ArticleFilter filter)
@@ -30,7 +30,7 @@ namespace NewsAppAPI.Services.Classes
             return await _articleRepository.GetFilteredArticlesAsync(filter);
         }
 
-        public async Task<NewsArticle> GetArticleByIdAsync(int id)
+        public async Task<NewsArticle> GetArticleByIdAsync(string id)
         {
             var article = await _articleRepository.GetArticleByIdAsync(id);
             if (article == null)
@@ -50,7 +50,7 @@ namespace NewsAppAPI.Services.Classes
             await _articleRepository.AddArticleAsync(article);
         }
 
-        public async Task DeleteArticleAsync(int id)
+        public async Task DeleteArticleAsync(string id)
         {
             var article = await _articleRepository.GetArticleByIdAsync(id);
             if (article == null)
@@ -60,7 +60,7 @@ namespace NewsAppAPI.Services.Classes
             await _articleRepository.DeleteArticleAsync(id);
         }
 
-        public async Task BulkDeleteArticlesAsync(IEnumerable<int> articleIds)
+        public async Task BulkDeleteArticlesAsync(IEnumerable<string> articleIds)
         {
             if (articleIds == null || !articleIds.Any())
             {
@@ -69,7 +69,7 @@ namespace NewsAppAPI.Services.Classes
             await _articleRepository.BulkDeleteArticlesAsync(articleIds);
         }
 
-        public async Task BulkUpdateArticlesStatusAsync(IEnumerable<int> ids, string status)
+        public async Task BulkUpdateArticlesStatusAsync(IEnumerable<string> ids, string status)
         {
             if (ids == null || !ids.Any())
             {

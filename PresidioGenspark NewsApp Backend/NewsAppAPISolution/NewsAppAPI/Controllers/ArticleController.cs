@@ -17,10 +17,10 @@ namespace NewsAppAPI.Controllers
             _articleService = articleService;
         }
 
-        [HttpGet("pending")]
-        public async Task<IActionResult> GetAllPendingArticles()
+        [HttpGet("status/{status}")]
+        public async Task<IActionResult> GetAllPendingArticles(string status)
         {
-            var articles = await _articleService.GetAllPendingArticlesAsync();
+            var articles = await _articleService.GetAllArticlesByStatusAsync(status);
             return Ok(articles);
         }
 
@@ -32,7 +32,7 @@ namespace NewsAppAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetArticleById(int id)
+        public async Task<IActionResult> GetArticleById(string id)
         {
             try
             {
@@ -60,7 +60,7 @@ namespace NewsAppAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteArticle(int id)
+        public async Task<IActionResult> DeleteArticle(string id)
         {
             try
             {
@@ -74,7 +74,7 @@ namespace NewsAppAPI.Controllers
         }
 
         [HttpDelete("bulk")]
-        public async Task<IActionResult> BulkDeleteArticles([FromBody] IEnumerable<int> articleIds)
+        public async Task<IActionResult> BulkDeleteArticles([FromBody] IEnumerable<string> articleIds)
         {
             if (articleIds == null || !articleIds.Any())
             {

@@ -15,6 +15,7 @@ const HomePage = () => {
         const fetchArticlesData = async () => {
             try {
                 const data = await articleService.fetchArticles(category, searchQuery);
+                console.log(data);
                 if (data.data) { // Ensure articles exist
                     setArticles(data.data);
                     const totalArticles = data.data.length;
