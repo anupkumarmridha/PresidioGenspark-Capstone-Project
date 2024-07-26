@@ -4,16 +4,18 @@
     max-width: 500px; /* Increase width for a better layout */
     margin: 0 auto;
     position: relative; /* For positioning the search button */
+    margin-left: 10px;
 }
 
 .search-bar input {
     width: 100%;
-    padding: 12px 50px 12px 15px; /* Adjust padding to accommodate the button */
+    padding: 12px 50px 12px 15px;
     border: 1px solid #ccc;
-    border-radius: 25px; /* Rounded corners */
+    border-radius: 6px;
     font-size: 16px;
     outline: none;
-    transition: border-color 0.3s, box-shadow 0.3s; /* Added box-shadow for a subtle effect */
+    transition: border-color 0.3s, box-shadow 0.3s;
+   
 }
 
 .search-bar input:focus {
@@ -25,9 +27,9 @@
     background-color: #007bff; /* Button color */
     border: none;
     border-radius: 50%; /* Circular button */
-    padding: 12px; /* Adjust size to match input */
+    padding: 10px; /* Adjust size to match input */
     position: absolute;
-    right: 10px; /* Align button to the right of the input */
+    right: 5px; /* Align button to the right of the input */
     cursor: pointer;
     display: flex;
     align-items: center;

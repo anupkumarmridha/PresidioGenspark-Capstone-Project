@@ -29,8 +29,8 @@
 
 .navbar-buttons {
     display: flex;
-    gap: 10px;
-    margin-right: 10px;
+    gap: 5px;
+    margin-right: 5px;
 }
 
 .navbar-buttons button {
@@ -41,6 +41,7 @@
     border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s, transform 0.3s;
+    margin-left: 10px;
 }
 
 .navbar-buttons button:hover {
@@ -75,6 +76,7 @@
 
 .profile-menu {
     position: relative;
+    margin-right: 12px;
 }
 
 .profile-button {
@@ -147,5 +149,15 @@
     .navbar-buttons button {
         margin: 10px 0;
         width: 100%;
+    }
+    .navbar-brand a {
+        display: none;
+    }
+    .navbar-auth {
+        margin: 6px;
+        padding: 2px 4px;
+    }
+    .profile-menu {
+        margin-right: 4px;
     }
 }

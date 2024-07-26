@@ -14,7 +14,7 @@ const SearchBar = ({ onSearch }) => {
                 placeholder="Search articles..."
                 onChange={handleSearchChange}
             />
-            <button className="search-button">
+            <button className="search-button" aria-label="Search">
                 <i className="fas fa-search"></i>
             </button>
         </div>
