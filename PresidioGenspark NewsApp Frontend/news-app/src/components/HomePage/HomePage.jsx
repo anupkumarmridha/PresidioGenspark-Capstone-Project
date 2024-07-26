@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ArticleList from './ArticleList';
 import Pagination from './Pagination';
-import NavBar from '../NavBar/NavBar';
 import { articleService } from '../../services/articleService';
 
 const HomePage = () => {
@@ -44,7 +43,6 @@ const HomePage = () => {
 
     return (
         <div className="home-page">
-            <NavBar onSearch={handleSearch} onCategoryChange={handleCategoryChange} />
             <ArticleList articles={articles} currentPage={currentPage} />
             <Pagination
                 currentPage={currentPage}

@@ -31,7 +31,10 @@ const NavBar = ({ onSearch, onCategoryChange }) => {
                         </button>
                         {showProfileMenu && (
                             <div className="profile-dropdown">
-                                <Link to="/profile">Profile</Link>
+                                 <Link to="/profile">Profile</Link>
+                                {profile?.role === 'Admin' && (
+                                    <Link to="/admin-portal">Admin Portal</Link>
+                                )}
                                 <button onClick={logOut}>Logout</button>
                             </div>
                         )}

@@ -49,7 +49,7 @@ namespace NewsAppAPI.Services.Classes
                 }
 
                 // Wait for 1 hour before the next fetch
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
             }
         }
 
