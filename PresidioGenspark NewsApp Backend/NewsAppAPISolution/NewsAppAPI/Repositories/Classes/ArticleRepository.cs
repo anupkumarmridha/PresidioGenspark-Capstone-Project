@@ -10,35 +10,45 @@ namespace NewsAppAPI.Repositories.Classes
     public class ArticleRepository : IArticleRepository
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<ArticleRepository> _logger;
 
-        public ArticleRepository(AppDbContext context)
+        public ArticleRepository(AppDbContext context, ILogger<ArticleRepository> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         #region BulkInsertArticlesAsync
         public async Task BulkInsertArticlesAsync(IEnumerable<NewsArticle> articles, string category)
         {
-            // Fetch existing article IDs from the database
-            var existingArticleIds = await _context.NewsArticles
+            // Fetch existing articles from the database
+            var existingArticles = await _context.NewsArticles
                 .Where(a => a.Status == "Pending")
-                .Select(a => a.Id)
                 .ToListAsync();
 
-            // Convert the list of existing IDs to a HashSet
-            var existingArticleIdSet = new HashSet<string>(existingArticleIds);
+            // Use a set to track existing article IDs for quick lookup
+            var existingArticleIdSet = new HashSet<string>(existingArticles.Select(a => a.Id));
 
-            // Filter out articles that already exist in the database
+            // Use a set to track content hashes of existing articles for additional duplicate check
+            var existingContentHashes = new HashSet<string>(existingArticles.Select(a => a.Content.GetHashCode().ToString()));
+
+            // Filter out articles that already exist based on ID or content hash
             var newArticles = articles
-                .Where(a => !existingArticleIdSet.Contains(a.Id))
+                .Where(a => !existingArticleIdSet.Contains(a.Id) && !existingContentHashes.Contains(a.Content.GetHashCode().ToString()))
                 .ToList();
 
             if (newArticles.Any())
             {
                 await _context.NewsArticles.AddRangeAsync(newArticles);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Inserting {Count} new articles for category {Category}.", newArticles.Count, category);
+            }
+            else
+            {
+                _logger.LogInformation("No new articles to insert for category {Category}.", category);
             }
         }
+
         #endregion BulkInsertArticlesAsync
 
         #region AddArticleAsync

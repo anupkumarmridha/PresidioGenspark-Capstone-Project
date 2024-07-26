@@ -10,5 +10,6 @@
         public string ImageUrl { get; set; }
         public string ReadMoreUrl { get; set; }
         public string Status { get; set; }
+        public string Category { get; set; }
     }
 }
