@@ -74,7 +74,7 @@ namespace NewsAppAPI.Services.Classes
 
                     var newsArticles = articles.Select(article => new NewsArticle
                     {
-                        Id = (string)article["id"],  // No parsing needed, assign as string
+                        Id = (string)article["id"],
                         Author = (string)article["author"],
                         Content = (string)article["content"],
                         Date = DateTime.Parse((string)article["date"]),

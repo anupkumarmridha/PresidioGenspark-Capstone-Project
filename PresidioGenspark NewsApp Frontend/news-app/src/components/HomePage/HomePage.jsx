@@ -1,4 +1,6 @@
+// src/components/HomePage/HomePage.jsx
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import ArticleList from './ArticleList';
 import Pagination from './Pagination';
 import { articleService } from '../../services/articleService';
@@ -9,11 +11,16 @@ const HomePage = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [category, setCategory] = useState('all'); // Default to all categories
+    const location = useLocation(); // Get query parameters
 
     useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const categoryParam = queryParams.get('category') || 'all';
+        setCategory(categoryParam);
+
         const fetchArticlesData = async () => {
             try {
-                const data = await articleService.fetchArticles(category, searchQuery);
+                const data = await articleService.fetchArticles(categoryParam, searchQuery);
                 console.log(data);
                 if (data.data) { // Ensure articles exist
                     setArticles(data.data);
@@ -27,18 +34,13 @@ const HomePage = () => {
                 setArticles([]); // Handle errors gracefully
             }
         };
-    
+
         fetchArticlesData();
-    }, [searchQuery, category]);
+    }, [searchQuery, category, location.search]);
 
     const handleSearch = (query) => {
         setSearchQuery(query);
         setCurrentPage(1); // Reset to first page on new search
-    };
-
-    const handleCategoryChange = (newCategory) => {
-        setCategory(newCategory);
-        setCurrentPage(1); // Reset to first page on category change
     };
 
     return (
