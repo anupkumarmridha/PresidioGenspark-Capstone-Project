@@ -141,7 +141,8 @@ namespace NewsAppAPI.Repositories.Classes
                 query = query.Where(a => a.Date <= filter.EndDate.Value);
             }
 
-            if (!string.IsNullOrEmpty(filter.Status))
+            // Check if status is not "all"
+            if (!string.IsNullOrEmpty(filter.Status) && filter.Status != "all")
             {
                 query = query.Where(a => a.Status == filter.Status);
             }
@@ -156,8 +157,14 @@ namespace NewsAppAPI.Repositories.Classes
                 query = query.Where(a => a.Content.Contains(filter.ContentKeyword));
             }
 
+            if (!string.IsNullOrEmpty(filter.Category))
+            {
+                query = query.Where(a => a.Category == filter.Category);
+            }
+
             return await query.ToListAsync();
         }
+
         #endregion GetFilteredArticlesAsync
     }
 }

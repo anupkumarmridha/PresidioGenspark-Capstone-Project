@@ -12,6 +12,17 @@ export const fetchArticlesByStatus = async (status) => {
     }
 };
 
+export const fetchArticles = async (filters) => {
+    try {
+        const queryParams = new URLSearchParams(filters).toString();
+        const response = await axios.get(`${API_BASE_URL}/api/Article?${queryParams}`);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch articles:', error);
+        throw error;
+    }
+};
+
 export const updateArticleStatus = async (ids, status) => {
     try {
         const response = await axios.patch(`${API_BASE_URL}/api/Article/bulk/status`, {

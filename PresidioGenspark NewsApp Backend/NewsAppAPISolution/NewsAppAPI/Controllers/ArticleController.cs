@@ -25,11 +25,32 @@ namespace NewsAppAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetFilteredArticles([FromQuery] ArticleFilter filter)
+        public async Task<IActionResult> GetFilteredArticles(
+        [FromQuery] string? status = null,
+        [FromQuery] string? category = null,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] string? author = null,
+        [FromQuery] string? title = null,
+        [FromQuery] string? contentKeyword = null)
         {
+            var filter = new ArticleFilter
+            {
+                Status = status,
+                Category = category,
+                StartDate = startDate,
+                EndDate = endDate,
+                Author = author,
+                Title = title,
+                ContentKeyword = contentKeyword
+            };
+
             var articles = await _articleService.GetFilteredArticlesAsync(filter);
             return Ok(articles);
         }
+
+
+
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetArticleById(string id)
