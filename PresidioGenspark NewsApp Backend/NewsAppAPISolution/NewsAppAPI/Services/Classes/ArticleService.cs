@@ -24,10 +24,10 @@ namespace NewsAppAPI.Services.Classes
             return await _articleRepository.GetAllArticlesByStatusAsync(status);
         }
 
-        public async Task<IEnumerable<NewsArticle>> GetFilteredArticlesAsync(ArticleFilter filter)
+        public async Task<PaginatedArticlesDto> GetFilteredArticlesAsync(ArticleFilter filter, int pageNumber, int pageSize)
         {
             // Validate filter values as needed
-            return await _articleRepository.GetFilteredArticlesAsync(filter);
+            return await _articleRepository.GetFilteredArticlesAsync(filter, pageNumber, pageSize);
         }
 
         public async Task<NewsArticle> GetArticleByIdAsync(string id)

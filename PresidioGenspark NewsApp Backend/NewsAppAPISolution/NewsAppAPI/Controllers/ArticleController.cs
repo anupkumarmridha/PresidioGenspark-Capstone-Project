@@ -26,13 +26,15 @@ namespace NewsAppAPI.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetFilteredArticles(
-        [FromQuery] string? status = null,
-        [FromQuery] string? category = null,
-        [FromQuery] DateTime? startDate = null,
-        [FromQuery] DateTime? endDate = null,
-        [FromQuery] string? author = null,
-        [FromQuery] string? title = null,
-        [FromQuery] string? contentKeyword = null)
+                    [FromQuery] string? status = null,
+                    [FromQuery] string? category = null,
+                    [FromQuery] DateTime? startDate = null,
+                    [FromQuery] DateTime? endDate = null,
+                    [FromQuery] string? author = null,
+                    [FromQuery] string? title = null,
+                    [FromQuery] string? contentKeyword = null,
+                    [FromQuery] int pageNumber = 1, 
+                    [FromQuery] int pageSize = 10)
         {
             var filter = new ArticleFilter
             {
@@ -45,9 +47,12 @@ namespace NewsAppAPI.Controllers
                 ContentKeyword = contentKeyword
             };
 
-            var articles = await _articleService.GetFilteredArticlesAsync(filter);
-            return Ok(articles);
+            var paginatedArticles = await _articleService.GetFilteredArticlesAsync(filter, pageNumber, pageSize);
+
+            // You can return the PaginatedArticlesDto or directly return the result
+            return Ok(paginatedArticles);
         }
+
 
 
 

@@ -122,10 +122,11 @@ namespace NewsAppAPI.Repositories.Classes
         #endregion GetArticleByIdAsync
 
         #region GetFilteredArticlesAsync
-        public async Task<IEnumerable<NewsArticle>> GetFilteredArticlesAsync(ArticleFilter filter)
+        public async Task<PaginatedArticlesDto> GetFilteredArticlesAsync(ArticleFilter filter, int pageNumber, int pageSize)
         {
             var query = _context.NewsArticles.AsQueryable();
 
+            // Apply filters
             if (!string.IsNullOrEmpty(filter.Author))
             {
                 query = query.Where(a => a.Author.Contains(filter.Author));
@@ -141,7 +142,6 @@ namespace NewsAppAPI.Repositories.Classes
                 query = query.Where(a => a.Date <= filter.EndDate.Value);
             }
 
-            // Check if status is not "all"
             if (!string.IsNullOrEmpty(filter.Status) && filter.Status != "all")
             {
                 query = query.Where(a => a.Status == filter.Status);
@@ -162,7 +162,23 @@ namespace NewsAppAPI.Repositories.Classes
                 query = query.Where(a => a.Category == filter.Category);
             }
 
-            return await query.ToListAsync();
+            // Order by date descending
+            query = query.OrderByDescending(a => a.Date);
+
+            // Calculate total count before pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var paginatedArticles = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PaginatedArticlesDto
+            {
+                TotalCount = totalCount,
+                Articles = paginatedArticles
+            };
         }
 
         #endregion GetFilteredArticlesAsync

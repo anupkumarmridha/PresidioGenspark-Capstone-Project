@@ -7,7 +7,7 @@ namespace NewsAppAPI.Repositories.Interfaces
     {
         Task BulkInsertArticlesAsync(IEnumerable<NewsArticle> articles, string category);
         Task<IEnumerable<NewsArticle>> GetAllArticlesByStatusAsync(string status);
-        Task<IEnumerable<NewsArticle>> GetFilteredArticlesAsync(ArticleFilter filter);
+        Task<PaginatedArticlesDto> GetFilteredArticlesAsync(ArticleFilter filter, int pageNumber, int pageSize);
         Task<NewsArticle> GetArticleByIdAsync(string id);
         Task AddArticleAsync(NewsArticle article);
         Task DeleteArticleAsync(string id);

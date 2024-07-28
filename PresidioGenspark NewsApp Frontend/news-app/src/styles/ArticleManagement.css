@@ -89,6 +89,39 @@
     margin: 10px 0;
 }
 
+/* src/styles/ArticleManagement.css */
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1em;
+}
+
+.pagination-controls button {
+    margin: 0 0.25em;
+    padding: 0.5em 1em;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    cursor: pointer;
+}
+
+.pagination-controls button.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+.pagination-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.pagination-controls span {
+    margin-left: 0.5em;
+}
+
+
 /* Modal Styles */
 .modal {
     position: absolute;
