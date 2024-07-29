@@ -115,9 +115,50 @@ namespace NewsAppAPI.Repositories.Classes
         #endregion GetAllPendingArticlesAsync
 
         #region GetArticleByIdAsync
-        public async Task<NewsArticle> GetArticleByIdAsync(string id)
+        public async Task<ArticleDto> GetArticleByIdAsync(string id)
         {
-            return await _context.NewsArticles.FindAsync(id);
+            var article = await _context.NewsArticles
+        .Include(a => a.Comments) // Eager load comments
+        .Include(a => a.Reactions) // Eager load reactions
+        .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (article == null)
+            {
+                throw new KeyNotFoundException("Article not found.");
+            }
+
+            var totalLikes = article.Reactions.Count(r => r.ReactionType == ReactionType.Like);
+            var totalDislikes = article.Reactions.Count(r => r.ReactionType == ReactionType.Dislike);
+            var totalComments = article.Comments.Count;
+
+            var articleDto = new ArticleDto
+            {
+                Id = article.Id,
+                Title = article.Title,
+                Content = article.Content,
+                CreatedAt = article.Date,
+                TotalLikes = totalLikes,
+                TotalDislikes = totalDislikes,
+                TotalComments = totalComments,
+                Comments = article.Comments.Select(c => new CommentDto
+                {
+                    Id = c.Id,
+                    Content = c.Content,
+                    CreatedAt = c.CreatedAt,
+                    UserId = c.UserId,
+                    ParentId = c.ParentId,
+                    Replies = c.Replies.Select(r => new CommentDto
+                    {
+                        Id = r.Id,
+                        Content = r.Content,
+                        CreatedAt = r.CreatedAt,
+                        UserId = r.UserId,
+                        ParentId = r.ParentId
+                    }).ToList()
+                }).ToList()
+            };
+
+            return articleDto;
         }
         #endregion GetArticleByIdAsync
 

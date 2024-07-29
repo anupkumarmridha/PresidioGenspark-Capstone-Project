@@ -11,5 +11,8 @@
         public string ReadMoreUrl { get; set; }
         public string Status { get; set; }
         public string Category { get; set; }
+
+        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
     }
 }

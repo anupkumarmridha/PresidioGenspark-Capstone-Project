@@ -30,7 +30,7 @@ namespace NewsAppAPI.Services.Classes
             return await _articleRepository.GetFilteredArticlesAsync(filter, pageNumber, pageSize);
         }
 
-        public async Task<NewsArticle> GetArticleByIdAsync(string id)
+        public async Task<ArticleDto> GetArticleByIdAsync(string id)
         {
             var article = await _articleRepository.GetArticleByIdAsync(id);
             if (article == null)
