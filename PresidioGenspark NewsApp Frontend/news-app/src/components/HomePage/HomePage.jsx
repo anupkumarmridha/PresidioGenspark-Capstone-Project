@@ -2,54 +2,64 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import ArticleList from './ArticleList';
-import Pagination from './Pagination';
+import Pagination from '../AdminPortal/Pagination';
 import { articleService } from '../../services/articleService';
 
 const HomePage = () => {
     const [articles, setArticles] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
-    const [category, setCategory] = useState('all'); // Default to all categories
-    const location = useLocation(); // Get query parameters
+    const [category, setCategory] = useState('all');
+    const [isLoading, setIsLoading] = useState(false);
+    const location = useLocation();
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
         const categoryParam = queryParams.get('category') || 'all';
-        setCategory(categoryParam);
+        
+        // Reset page to 1 when category changes
+        if (category !== categoryParam) {
+            setCategory(categoryParam);
+            setCurrentPage(1); // Reset to page 1 when category changes
+        }
 
-        const fetchArticlesData = async () => {
-            try {
-                const data = await articleService.fetchArticles(categoryParam, searchQuery);
-                console.log(data);
-                if (data.data) { // Ensure articles exist
-                    setArticles(data.data);
-                    const totalArticles = data.data.length;
-                    setTotalPages(Math.ceil(totalArticles / 6)); // Calculate total pages based on articles
-                } else {
-                    setArticles([]); // Set to empty array if no articles are found
-                }
-            } catch (error) {
-                console.error('Error fetching articles', error);
-                setArticles([]); // Handle errors gracefully
+        fetchArticlesData(categoryParam, searchQuery, currentPage);
+    }, [category, currentPage, searchQuery, location.search]);
+
+    const fetchArticlesData = async (categoryParam, searchQuery, pageNumber) => {
+        setIsLoading(true);
+        try {
+            const data = await articleService.fetchArticles(categoryParam, searchQuery, pageNumber);
+            // console.log('Fetched data:', data);
+            if (data.articles) {
+                setArticles(data.articles);
+                setTotalCount(data.totalCount);
+            } else {
+                setArticles([]);
+                setTotalCount(0);
             }
-        };
-
-        fetchArticlesData();
-    }, [searchQuery, category, location.search]);
+        } catch (error) {
+            console.error('Error fetching articles:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleSearch = (query) => {
         setSearchQuery(query);
-        setCurrentPage(1); // Reset to first page on new search
+        setCurrentPage(1); // Reset to page 1 on search
     };
 
     return (
         <div className="home-page">
             <ArticleList articles={articles} currentPage={currentPage} />
             <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
+                pageNumber={currentPage}
+                pageSize={10} // Set the page size
+                totalCount={totalCount}
                 onPageChange={setCurrentPage}
+                isLoading={isLoading}
             />
         </div>
     );

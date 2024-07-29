@@ -19,7 +19,7 @@ const ArticleCard = ({ article }) => {
                     <div className="article-content">
                         <h2 className="article-title">{article.title}</h2>
                         <p className="article-author">By {article.author}</p>
-                        <p className="article-date">{article.date} at {article.time}</p>
+                        <p className="article-date">{new Date(article.date).toLocaleDateString()}</p>
                         <p className="article-summary">{truncateContent(article.content, 100)}</p>
                         <p className="read-more-link">Read more</p>
                     </div>
@@ -37,9 +37,9 @@ ArticleCard.propTypes = {
         id: PropTypes.string.isRequired,
         imageUrl: PropTypes.string.isRequired,
         readMoreUrl: PropTypes.string.isRequired,
-        time: PropTypes.string.isRequired,
+        // time: PropTypes.string.isRequired,
         title: PropTypes.string.isRequired,
-        url: PropTypes.string.isRequired
+        // url: PropTypes.string.isRequired
     }).isRequired
 };
 
