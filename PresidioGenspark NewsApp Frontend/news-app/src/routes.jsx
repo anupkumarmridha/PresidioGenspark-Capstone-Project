@@ -6,6 +6,7 @@ import Profile from './components/Authentication/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import ArticleManagement from './components/AdminPortal/ArticleManagement';
 import AdminProtectedRoute from './components/AdminPortal/AdminProtectedRoute';
+import Article from './components/ArticleDetailsPage/Article';
 import Layout from './components/Layout';
 
 const RoutesConfig = () => (
@@ -28,6 +29,10 @@ const RoutesConfig = () => (
                         <ArticleManagement />
                     </AdminProtectedRoute>
                 }
+            />
+            <Route
+                path="/article/:articleId"
+                element={<Article />}
             />
         </Route>
         <Route path="*" element={<HomePage />} /> {/* Default route */}

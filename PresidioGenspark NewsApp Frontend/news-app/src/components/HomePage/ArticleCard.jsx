@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import '../../styles/ArticleCard.css';
+import { Link } from 'react-router-dom';
 
 const truncateContent = (content, wordLimit) => {
     const words = content.split(' ');
@@ -11,9 +12,16 @@ const truncateContent = (content, wordLimit) => {
 };
 
 const ArticleCard = ({ article }) => {
+    const handleReadMoreClick = (e) => {
+        // Prevent default link behavior if needed
+        if (article.readMoreUrl) {
+            window.open(article.readMoreUrl, '_blank', 'noopener,noreferrer');
+        }
+    };
+
     return (
         <div className="article-card-container">
-            <a href={article.readMoreUrl} className="article-card-link">
+            <Link to={`/article/${article.id}`} className="article-card-link">
                 <div className="article-card">
                     <img src={article.imageUrl} alt={article.title} className="article-image" />
                     <div className="article-content">
@@ -21,12 +29,14 @@ const ArticleCard = ({ article }) => {
                         <p className="article-author">By {article.author}</p>
                         <p className="article-date">{new Date(article.date).toLocaleDateString()}</p>
                         <p className="article-summary">{truncateContent(article.content, 100)}</p>
-                        <p className="read-more-link"><a href={article.readMoreUrl} target="_blank" rel="noopener noreferrer">
-                            Read More
-                        </a></p>
+                        <p className="read-more-link">
+                            <a href={article.readMoreUrl || '#'} onClick={handleReadMoreClick}>
+                                Read More
+                            </a>
+                        </p>
                     </div>
                 </div>
-            </a>
+            </Link>
         </div>
     );
 };
@@ -38,10 +48,8 @@ ArticleCard.propTypes = {
         date: PropTypes.string.isRequired,
         id: PropTypes.string.isRequired,
         imageUrl: PropTypes.string.isRequired,
-        readMoreUrl: PropTypes.string.isRequired,
-        // time: PropTypes.string.isRequired,
+        readMoreUrl: PropTypes.string,
         title: PropTypes.string.isRequired,
-        // url: PropTypes.string.isRequired
     }).isRequired
 };
 
