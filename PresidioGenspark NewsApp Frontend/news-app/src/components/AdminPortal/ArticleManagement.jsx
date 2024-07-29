@@ -6,6 +6,7 @@ import { FaSortUp, FaSortDown } from 'react-icons/fa';
 import Pagination from './Pagination';
 import Filters from './Filters';
 import { toast } from 'react-toastify';
+import { useOutletContext } from 'react-router-dom';
 
 const categories = ["all", "business", "sports", "technology", "entertainment"];
 const truncateContent = (content) => {
@@ -32,10 +33,12 @@ const ArticleManagement = () => {
     const [pageSize] = useState(10); // Adjust the page size as needed
     const [totalCount, setTotalCount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+    const { searchQuery } = useOutletContext(); // Get search query from Outlet context
 
     useEffect(() => {
+        console.log("Search Query:", searchQuery);
         fetchArticlesData();
-    }, [filterStatus, category, startDate, endDate, author, title, contentKeyword, sortConfig, pageNumber]);
+    }, [filterStatus, category, startDate, endDate, author, title, contentKeyword, searchQuery, sortConfig, pageNumber]);
 
     const fetchArticlesData = async () => {
         setIsLoading(true);
@@ -47,7 +50,7 @@ const ArticleManagement = () => {
                 endDate,
                 author,
                 title,
-                contentKeyword,
+                contentKeyword: searchQuery || contentKeyword,
                 pageNumber,
                 pageSize
             };
@@ -213,7 +216,7 @@ const ArticleManagement = () => {
                 onPageChange={setPageNumber}
                 isLoading={isLoading}
             />
-        <Modal
+            <Modal
                 isOpen={modalIsOpen}
                 onRequestClose={cancelUpdate}
                 contentLabel="Confirm Status Update"
