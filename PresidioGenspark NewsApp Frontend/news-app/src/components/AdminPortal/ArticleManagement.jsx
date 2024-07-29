@@ -202,7 +202,10 @@ const ArticleManagement = () => {
                             <td>{article.title}</td>
                             <td>{article.author}</td>
                             <td>{new Date(article.date).toLocaleDateString()}</td>
-                            <td>{truncateContent(article.content)}</td>
+                            <td>   {truncateContent(article.content)}{' '}
+                                <a href={article.readMoreUrl} target="_blank" rel="noopener noreferrer">
+                                    Read More
+                                </a></td>
                             <td>{article.category}</td>
                             <td>{article.status}</td>
                         </tr>

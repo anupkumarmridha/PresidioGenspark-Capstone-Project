@@ -21,7 +21,9 @@ const ArticleCard = ({ article }) => {
                         <p className="article-author">By {article.author}</p>
                         <p className="article-date">{new Date(article.date).toLocaleDateString()}</p>
                         <p className="article-summary">{truncateContent(article.content, 100)}</p>
-                        <p className="read-more-link">Read more</p>
+                        <p className="read-more-link"><a href={article.readMoreUrl} target="_blank" rel="noopener noreferrer">
+                            Read More
+                        </a></p>
                     </div>
                 </div>
             </a>
