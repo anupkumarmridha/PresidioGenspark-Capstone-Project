@@ -6,10 +6,9 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using NewsAppAPI.Services.Interfaces;
 
 namespace NewsAppAPI.Kafka.Consumers
 {
@@ -19,11 +18,6 @@ namespace NewsAppAPI.Kafka.Consumers
         private readonly string _reactionsTopic;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<ReactionConsumer> _logger;
-        private readonly int _batchSize;
-        private readonly TimeSpan _batchInterval;
-
-        private readonly List<Reaction> _batch;
-        private readonly Timer _timer;
 
         public ReactionConsumer(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory, ILogger<ReactionConsumer> logger)
         {
@@ -31,10 +25,6 @@ namespace NewsAppAPI.Kafka.Consumers
             _reactionsTopic = configuration["Kafka:ReactionsTopic"];
             _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
-            _batchSize = int.Parse(configuration["Kafka:BatchSize"] ?? "100");
-            _batchInterval = TimeSpan.FromSeconds(int.Parse(configuration["Kafka:BatchInterval"] ?? "10"));
-            _batch = new List<Reaction>();
-            _timer = new Timer(ProcessBatch, null, _batchInterval, _batchInterval);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -43,7 +33,8 @@ namespace NewsAppAPI.Kafka.Consumers
             {
                 BootstrapServers = _bootstrapServers,
                 GroupId = "reaction-consumer-group",
-                AutoOffsetReset = AutoOffsetReset.Earliest
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                EnableAutoCommit = false // Manage offsets manually
             };
 
             using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
@@ -53,24 +44,33 @@ namespace NewsAppAPI.Kafka.Consumers
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    var cr = consumer.Consume(stoppingToken);
-                    var kafkaMessage = JsonSerializer.Deserialize<KafkaMessageDto>(cr.Value);
-                    var deserializedReaction = JsonSerializer.Deserialize<Reaction>(kafkaMessage.Message);
-
-                    if (kafkaMessage != null && IsValidKafkaMessageDto(kafkaMessage) && deserializedReaction != null)
+                    try
                     {
-                        lock (_batch)
+                        var cr = consumer.Consume(stoppingToken);
+                        var kafkaMessage = JsonSerializer.Deserialize<KafkaMessageDto>(cr.Value);
+                        var deserializedReaction = JsonSerializer.Deserialize<Reaction>(kafkaMessage.Message);
+
+                        if (kafkaMessage != null && IsValidKafkaMessageDto(kafkaMessage) && deserializedReaction != null)
                         {
-                            _batch.Add(deserializedReaction);
-                            if (_batch.Count >= _batchSize)
-                            {
-                                ProcessBatch(null);
-                            }
+                            using var scope = _serviceScopeFactory.CreateScope();
+                            var reactionService = scope.ServiceProvider.GetRequiredService<IReactionService>();
+
+                            await PerformOperationAsync(reactionService, deserializedReaction, kafkaMessage.Operation);
+
+                            consumer.Commit(cr); // Commit the offset after processing the message
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Invalid message received: {Message}", cr.Value);
                         }
                     }
-                    else
+                    catch (JsonException jsonEx)
                     {
-                        _logger.LogWarning("Invalid message received: {Message}", cr.Value);
+                        _logger.LogError($"JSON deserialization error: {jsonEx.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Error processing message: {ex.Message}");
                     }
                 }
             }
@@ -84,53 +84,22 @@ namespace NewsAppAPI.Kafka.Consumers
             }
         }
 
-        private async void ProcessBatch(object state)
-        {
-            List<Reaction> batchToProcess;
-
-            lock (_batch)
-            {
-                if (_batch.Count == 0)
-                    return;
-
-                batchToProcess = new List<Reaction>(_batch);
-                _batch.Clear();
-            }
-
-            try
-            {
-                using var scope = _serviceScopeFactory.CreateScope();
-                var reactionRepository = scope.ServiceProvider.GetRequiredService<IReactionRepository>();
-
-                var addTasks = batchToProcess.Select(reaction =>
-                    PerformBatchOperation(reactionRepository, reaction, "add")
-                );
-
-                await Task.WhenAll(addTasks);
-
-                _logger.LogInformation($"Processed batch of {batchToProcess.Count} reactions.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error processing batch: {ex.Message}");
-                // Optionally, you can re-add failed items to the batch or log them for further inspection.
-            }
-        }
-
-        private async Task PerformBatchOperation(IReactionRepository reactionRepository, Reaction reaction, string operation)
+        private async Task PerformOperationAsync(IReactionService reactionService, Reaction reaction, string operation)
         {
             switch (operation)
             {
                 case "add":
-                    await reactionRepository.AddReactionAsync(reaction);
+                    await reactionService.AddReactionAsync(reaction);
                     break;
                 case "remove":
-                    await reactionRepository.RemoveReactionAsync(reaction.UserId, reaction.ArticleId);
+                    await reactionService.RemoveReactionAsync(reaction.UserId, reaction.ArticleId);
                     break;
                 case "update":
-                    await reactionRepository.UpdateReactionAsync(reaction);
+                    await reactionService.UpdateReactionAsync(reaction);
                     break;
-                    // Add more cases as needed
+                default:
+                    _logger.LogWarning("Unknown operation: {Operation}", operation);
+                    break;
             }
         }
 

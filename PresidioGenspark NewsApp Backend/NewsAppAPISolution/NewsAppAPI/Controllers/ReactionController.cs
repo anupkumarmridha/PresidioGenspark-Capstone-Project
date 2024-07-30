@@ -24,14 +24,16 @@ namespace NewsAppAPI.Controllers
         private readonly ICacheService _cacheService;
         private readonly ILogger<ReactionController> _logger;
         private readonly IReactionService _reactionService;
+        private readonly string _reactionsTopic;
 
 
-        public ReactionController(IKafkaProducer kafkaProducer, ICacheService cacheService,IReactionService reactionService, ILogger<ReactionController> logger)
+        public ReactionController(IConfiguration configuration,IKafkaProducer kafkaProducer, ICacheService cacheService,IReactionService reactionService, ILogger<ReactionController> logger)
         {
             _kafkaProducer = kafkaProducer ?? throw new ArgumentNullException(nameof(kafkaProducer));
             _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _reactionService = reactionService ?? throw new ArgumentNullException(nameof(reactionService));
+            _reactionsTopic = configuration["Kafka:ReactionsTopic"];
         }
 
         [HttpPost]
@@ -57,7 +59,7 @@ namespace NewsAppAPI.Controllers
                 // Produce Kafka message
                 var kafkaMessageDto = new KafkaMessageDto
                 {
-                    Topic = "reactions",
+                    Topic = _reactionsTopic,
                     Message = JsonConvert.SerializeObject(reaction),
                     Operation = "add"
                 };
@@ -148,7 +150,7 @@ namespace NewsAppAPI.Controllers
                 // Produce Kafka message
                 var kafkaMessageDto = new KafkaMessageDto
                 {
-                    Topic = "reactions",
+                    Topic = _reactionsTopic,
                     Message = JsonConvert.SerializeObject(new { ArticleId = articleId, UserId = userId }),
                     Operation = "remove"
                 };
@@ -200,7 +202,7 @@ namespace NewsAppAPI.Controllers
                 // Produce Kafka message
                 var kafkaMessageDto = new KafkaMessageDto
                 {
-                    Topic = "reactions",
+                    Topic = _reactionsTopic,
                     Message = JsonConvert.SerializeObject(reaction),
                     Operation = "update"
                 };

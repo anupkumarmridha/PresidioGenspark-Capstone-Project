@@ -6,10 +6,9 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using NewsAppAPI.Services.Interfaces;
 
 namespace NewsAppAPI.Kafka.Consumers
 {
@@ -19,11 +18,6 @@ namespace NewsAppAPI.Kafka.Consumers
         private readonly string _commentsTopic;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<CommentConsumer> _logger;
-        private readonly int _batchSize;
-        private readonly TimeSpan _batchInterval;
-
-        private readonly List<Comment> _batch;
-        private readonly Timer _timer;
 
         public CommentConsumer(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory, ILogger<CommentConsumer> logger)
         {
@@ -31,10 +25,6 @@ namespace NewsAppAPI.Kafka.Consumers
             _commentsTopic = configuration["Kafka:CommentsTopic"];
             _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
-            _batchSize = int.Parse(configuration["Kafka:BatchSize"] ?? "100");
-            _batchInterval = TimeSpan.FromSeconds(int.Parse(configuration["Kafka:BatchInterval"] ?? "10"));
-            _batch = new List<Comment>();
-            _timer = new Timer(ProcessBatch, null, _batchInterval, _batchInterval);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -43,7 +33,8 @@ namespace NewsAppAPI.Kafka.Consumers
             {
                 BootstrapServers = _bootstrapServers,
                 GroupId = "comment-consumer-group",
-                AutoOffsetReset = AutoOffsetReset.Earliest
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                EnableAutoCommit = false // Manage offsets manually
             };
 
             using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
@@ -53,24 +44,33 @@ namespace NewsAppAPI.Kafka.Consumers
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    var cr = consumer.Consume(stoppingToken);
-                    var kafkaMessage = JsonSerializer.Deserialize<KafkaMessageDto>(cr.Value);
-                    var deserializedComment = JsonSerializer.Deserialize<Comment>(kafkaMessage.Message);
-
-                    if (kafkaMessage != null && IsValidKafkaMessageDto(kafkaMessage) && deserializedComment != null)
+                    try
                     {
-                        lock (_batch)
+                        var cr = consumer.Consume(stoppingToken);
+                        var kafkaMessage = JsonSerializer.Deserialize<KafkaMessageDto>(cr.Value);
+                        var deserializedComment = JsonSerializer.Deserialize<Comment>(kafkaMessage.Message);
+
+                        if (kafkaMessage != null && IsValidKafkaMessageDto(kafkaMessage) && deserializedComment != null)
                         {
-                            _batch.Add(deserializedComment);
-                            if (_batch.Count >= _batchSize)
-                            {
-                                ProcessBatch(null);
-                            }
+                            using var scope = _serviceScopeFactory.CreateScope();
+                            var commentService = scope.ServiceProvider.GetRequiredService<ICommentService>();
+
+                            await PerformOperationAsync(commentService, deserializedComment, kafkaMessage.Operation);
+
+                            consumer.Commit(cr); // Commit the offset after processing the message
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Invalid message received: {Message}", cr.Value);
                         }
                     }
-                    else
+                    catch (JsonException jsonEx)
                     {
-                        _logger.LogWarning("Invalid message received: {Message}", cr.Value);
+                        _logger.LogError($"JSON deserialization error: {jsonEx.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Error processing message: {ex.Message}");
                     }
                 }
             }
@@ -84,53 +84,22 @@ namespace NewsAppAPI.Kafka.Consumers
             }
         }
 
-        private async void ProcessBatch(object state)
-        {
-            List<Comment> batchToProcess;
-
-            lock (_batch)
-            {
-                if (_batch.Count == 0)
-                    return;
-
-                batchToProcess = new List<Comment>(_batch);
-                _batch.Clear();
-            }
-
-            try
-            {
-                using var scope = _serviceScopeFactory.CreateScope();
-                var commentRepository = scope.ServiceProvider.GetRequiredService<ICommentRepository>();
-
-                var addTasks = batchToProcess.Select(comment =>
-                    PerformBatchOperation(commentRepository, comment, "add")
-                );
-
-                await Task.WhenAll(addTasks);
-
-                _logger.LogInformation($"Processed batch of {batchToProcess.Count} comments.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error processing batch: {ex.Message}");
-                // Optionally, you can re-add failed items to the batch or log them for further inspection.
-            }
-        }
-
-        private async Task PerformBatchOperation(ICommentRepository commentRepository, Comment comment, string operation)
+        private async Task PerformOperationAsync(ICommentService commentService, Comment comment, string operation)
         {
             switch (operation)
             {
                 case "add":
-                    await commentRepository.AddCommentAsync(comment);
+                    await commentService.AddCommentAsync(comment);
                     break;
                 case "update":
-                    await commentRepository.UpdateCommentAsync(comment);
+                    await commentService.UpdateCommentAsync(comment);
                     break;
                 case "delete":
-                    await commentRepository.DeleteCommentAsync(comment.Id);
+                    await commentService.DeleteCommentAsync(comment.Id);
                     break;
-                    // Add more cases as needed
+                default:
+                    _logger.LogWarning("Unknown operation: {Operation}", operation);
+                    break;
             }
         }
 

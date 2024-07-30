@@ -26,17 +26,20 @@ namespace NewsAppAPI.Controllers
         private readonly IKafkaProducer _kafkaProducer;
         private readonly ICacheService _cacheService;
         private readonly ILogger<CommentController> _logger;
+        private readonly string _commentsTopic;
 
         public CommentController(
             ICommentService commentService,
             IKafkaProducer kafkaProducer,
             ICacheService cacheService,
-            ILogger<CommentController> logger)
+            ILogger<CommentController> logger,
+            IConfiguration configuration)
         {
             _commentService = commentService ?? throw new ArgumentNullException(nameof(commentService));
             _kafkaProducer = kafkaProducer ?? throw new ArgumentNullException(nameof(kafkaProducer));
             _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _commentsTopic = configuration["Kafka:CommentsTopic"];
         }
 
         [HttpGet]
@@ -136,7 +139,7 @@ namespace NewsAppAPI.Controllers
                 // Send message to Kafka
                 var kafkaMessageDto = new KafkaMessageDto
                 {
-                    Topic = "comments",
+                    Topic = _commentsTopic,
                     Message = JsonConvert.SerializeObject(comment),
                     Operation = "add"
                 };
@@ -187,7 +190,7 @@ namespace NewsAppAPI.Controllers
                 // Send message to Kafka
                 var kafkaMessageDto = new KafkaMessageDto
                 {
-                    Topic = "comments",
+                    Topic = _commentsTopic,
                     Message = JsonConvert.SerializeObject(comment),
                     Operation = "update"
                 };
@@ -229,7 +232,7 @@ namespace NewsAppAPI.Controllers
                 // Send message to Kafka
                 var kafkaMessageDto = new KafkaMessageDto
                 {
-                    Topic = "comments",
+                    Topic = _commentsTopic,
                     Message = JsonConvert.SerializeObject(comment),
                     Operation = "delete"
                 };
