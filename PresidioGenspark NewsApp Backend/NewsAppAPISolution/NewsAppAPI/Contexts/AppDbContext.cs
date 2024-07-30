@@ -48,6 +48,11 @@ namespace NewsAppAPI.Contexts
                 .HasForeignKey(c => c.ArticleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Add unique index for comments to ensure a user cannot comment more than once on the same article
+            modelBuilder.Entity<Comment>()
+                .HasIndex(c => new { c.UserId, c.ArticleId })
+                .IsUnique();
+
             // Reaction entity configuration
             modelBuilder.Entity<Reaction>()
                 .HasKey(r => r.Id);
@@ -63,6 +68,11 @@ namespace NewsAppAPI.Contexts
                 .WithMany(a => a.Reactions)
                 .HasForeignKey(r => r.ArticleId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Add unique index for reactions to ensure a user cannot react more than once to the same article
+            modelBuilder.Entity<Reaction>()
+                .HasIndex(r => new { r.UserId, r.ArticleId })
+                .IsUnique();
         }
     }
 }

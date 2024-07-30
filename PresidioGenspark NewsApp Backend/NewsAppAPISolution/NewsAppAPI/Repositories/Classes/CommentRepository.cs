@@ -33,24 +33,55 @@ namespace NewsAppAPI.Repositories.Classes
 
         public async Task AddCommentAsync(Comment comment)
         {
+            var existingComment = await _context.Comments
+                .FirstOrDefaultAsync(c => c.UserId == comment.UserId && c.ArticleId == comment.ArticleId && c.Content == comment.Content);
+
+            if (existingComment != null)
+            {
+                throw new InvalidOperationException("Duplicate comment detected.");
+            }
+
             await _context.Comments.AddAsync(comment);
             await _context.SaveChangesAsync();
         }
 
         public async Task UpdateCommentAsync(Comment comment)
         {
+            var existingComment = await _context.Comments
+                .FirstOrDefaultAsync(c => c.Id == comment.Id);
+
+            if (existingComment == null)
+            {
+                throw new InvalidOperationException("Comment not found.");
+            }
+
             _context.Comments.Update(comment);
             await _context.SaveChangesAsync();
         }
 
         public async Task DeleteCommentAsync(int id)
         {
-            var comment = await GetCommentByIdAsync(id);
-            if (comment != null)
+            var comment = await _context.Comments.FindAsync(id);
+
+            if (comment == null)
             {
-                _context.Comments.Remove(comment);
-                await _context.SaveChangesAsync();
+                throw new InvalidOperationException("Comment not found.");
             }
+
+            _context.Comments.Remove(comment);
+            await _context.SaveChangesAsync();
+        }
+
+
+        public async Task AddCommentsAsync(IEnumerable<Comment> comments)
+        {
+            if (comments == null || !comments.Any())
+            {
+                throw new ArgumentException("Comments collection is null or empty.", nameof(comments));
+            }
+
+            _context.Comments.AddRange(comments);
+            await _context.SaveChangesAsync();
         }
     }
 }

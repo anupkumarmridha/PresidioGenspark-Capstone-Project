@@ -11,6 +11,8 @@ using NewsAppAPI.Services.Interfaces;
 using System.Text;
 using log4net;
 using log4net.Config;
+using NewsAppAPI.Kafka.Consumers;
+using NewsAppAPI.Kafka.Producers;
 
 namespace NewsAppAPI
 {
@@ -50,6 +52,17 @@ namespace NewsAppAPI
 
         }
         #endregion RegisterServices
+
+        #region kafkaservices
+        private static void RegisterKafkaServices(IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddScoped<IKafkaProducer, KafkaProducer>();
+            services.AddSingleton<IHostedService, CommentConsumer>();
+            services.AddSingleton<IHostedService, ReactionConsumer>();
+
+        }
+        #endregion kafkaservices
+
 
         #region AddJWTTokenSwaggerGen
         /// <summary>
@@ -147,6 +160,7 @@ namespace NewsAppAPI
 
             RegisterRepositories(services);
             RegisterServices(services);
+            RegisterKafkaServices(services, configuration);
         }
         #endregion ConfigureServices
 

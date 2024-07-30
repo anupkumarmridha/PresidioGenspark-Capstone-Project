@@ -22,23 +22,55 @@ namespace NewsAppAPI.Repositories.Classes
 
         public async Task AddReactionAsync(Reaction reaction)
         {
+            var existingReaction = await _context.Reactions
+                .FirstOrDefaultAsync(r => r.UserId == reaction.UserId && r.ArticleId == reaction.ArticleId);
+
+            if (existingReaction != null)
+            {
+                throw new InvalidOperationException("Duplicate reaction detected.");
+            }
+
             await _context.Reactions.AddAsync(reaction);
             await _context.SaveChangesAsync();
         }
 
         public async Task RemoveReactionAsync(int userId, string articleId)
         {
-            var reaction = await GetReactionAsync(userId, articleId);
-            if (reaction != null)
+            var reaction = await _context.Reactions
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.ArticleId == articleId);
+
+            if (reaction == null)
             {
-                _context.Reactions.Remove(reaction);
-                await _context.SaveChangesAsync();
+                throw new InvalidOperationException("Reaction not found.");
             }
+
+            _context.Reactions.Remove(reaction);
+            await _context.SaveChangesAsync();
         }
 
         public async Task UpdateReactionAsync(Reaction reaction)
         {
+            var existingReaction = await _context.Reactions
+                .FirstOrDefaultAsync(r => r.UserId == reaction.UserId && r.ArticleId == reaction.ArticleId);
+
+            if (existingReaction == null)
+            {
+                throw new InvalidOperationException("Reaction not found.");
+            }
+
             _context.Reactions.Update(reaction);
+            await _context.SaveChangesAsync();
+        }
+
+
+        public async Task AddReactionsAsync(IEnumerable<Reaction> reactions)
+        {
+            if (reactions == null || !reactions.Any())
+            {
+                throw new ArgumentException("Reactions collection is null or empty.", nameof(reactions));
+            }
+
+            _context.Reactions.AddRange(reactions);
             await _context.SaveChangesAsync();
         }
     }

@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="2.5.0" />
     <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     <PackageReference Include="log4net" Version="2.0.17" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
@@ -27,6 +28,7 @@
 
   <ItemGroup>
     <Folder Include="Migrations\" />
+    <Folder Include="Utils\" />
   </ItemGroup>
 
 </Project>

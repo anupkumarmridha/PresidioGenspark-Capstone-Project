@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Confluent.Kafka;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using NewsAppAPI.Cache;
 using NewsAppAPI.DTOs;
+using NewsAppAPI.Kafka.Producers;
 using NewsAppAPI.Models;
 using NewsAppAPI.Services.Interfaces;
+using Newtonsoft.Json;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -16,13 +20,18 @@ namespace NewsAppAPI.Controllers
     [Authorize]
     public class ReactionController : ControllerBase
     {
-        private readonly IReactionService _reactionService;
+        private readonly IKafkaProducer _kafkaProducer;
+        private readonly ICacheService _cacheService;
         private readonly ILogger<ReactionController> _logger;
+        private readonly IReactionService _reactionService;
 
-        public ReactionController(IReactionService reactionService, ILogger<ReactionController> logger)
+
+        public ReactionController(IKafkaProducer kafkaProducer, ICacheService cacheService,IReactionService reactionService, ILogger<ReactionController> logger)
         {
-            _reactionService = reactionService ?? throw new ArgumentNullException(nameof(reactionService));
+            _kafkaProducer = kafkaProducer ?? throw new ArgumentNullException(nameof(kafkaProducer));
+            _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _reactionService = reactionService ?? throw new ArgumentNullException(nameof(reactionService));
         }
 
         [HttpPost]
@@ -45,9 +54,30 @@ namespace NewsAppAPI.Controllers
                     ReactionType = reactionDto.ReactionType
                 };
 
-                await _reactionService.AddReactionAsync(reaction);
-                _logger.LogInformation($"Reaction added: ArticleId={reactionDto.ArticleId}, UserId={userId}");
-                return Ok("Reaction added successfully.");
+                // Produce Kafka message
+                var kafkaMessageDto = new KafkaMessageDto
+                {
+                    Topic = "reactions",
+                    Message = JsonConvert.SerializeObject(reaction),
+                    Operation = "add"
+                };
+
+                var deliveryResult = await _kafkaProducer.ProduceAsync(kafkaMessageDto);
+
+                if (deliveryResult.Status == PersistenceStatus.Persisted)
+                {
+                    // Cache the reaction
+                    var cacheKey = $"reaction-{userId}-{reactionDto.ArticleId}";
+                    await _cacheService.SetAsync(cacheKey, reaction, TimeSpan.FromHours(1));
+
+                    _logger.LogInformation($"Reaction added and cached: ArticleId={reactionDto.ArticleId}, UserId={userId}");
+                    return Ok("Reaction added successfully.");
+                }
+                else
+                {
+                    _logger.LogWarning("AddReactionAsync: Kafka message was not persisted.");
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Failed to add reaction.");
+                }
             }
             catch (Exception ex)
             {
@@ -69,6 +99,17 @@ namespace NewsAppAPI.Controllers
             try
             {
                 var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.Name));
+
+                // Check cache first
+                var cacheKey = $"reaction-{userId}-{articleId}";
+                var cachedReaction = await _cacheService.GetAsync(cacheKey);
+
+                if (cachedReaction != null)
+                {
+                    _logger.LogInformation($"Reaction retrieved from cache: ArticleId={articleId}, UserId={userId}");
+                    return Ok(cachedReaction);
+                }
+
                 var reaction = await _reactionService.GetReactionAsync(userId, articleId);
 
                 if (reaction == null)
@@ -77,7 +118,10 @@ namespace NewsAppAPI.Controllers
                     return NotFound("Reaction not found.");
                 }
 
-                _logger.LogInformation($"Reaction retrieved: ArticleId={articleId}, UserId={userId}");
+                // Cache the fetched reaction
+                await _cacheService.SetAsync(cacheKey, reaction, TimeSpan.FromHours(1));
+
+                _logger.LogInformation($"Reaction retrieved from database and cached: ArticleId={articleId}, UserId={userId}");
                 return Ok(reaction);
             }
             catch (Exception ex)
@@ -100,9 +144,31 @@ namespace NewsAppAPI.Controllers
             try
             {
                 var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.Name));
-                await _reactionService.RemoveReactionAsync(userId, articleId);
-                _logger.LogInformation($"Reaction removed: ArticleId={articleId}, UserId={userId}");
-                return Ok("Reaction removed successfully.");
+
+                // Produce Kafka message
+                var kafkaMessageDto = new KafkaMessageDto
+                {
+                    Topic = "reactions",
+                    Message = JsonConvert.SerializeObject(new { ArticleId = articleId, UserId = userId }),
+                    Operation = "remove"
+                };
+
+                var deliveryResult = await _kafkaProducer.ProduceAsync(kafkaMessageDto);
+
+                if (deliveryResult.Status == PersistenceStatus.Persisted)
+                {
+                    // Remove from cache
+                    var cacheKey = $"reaction-{userId}-{articleId}";
+                    await _cacheService.RemoveAsync(cacheKey);
+
+                    _logger.LogInformation($"Reaction removed and cache cleared: ArticleId={articleId}, UserId={userId}");
+                    return Ok("Reaction removed successfully.");
+                }
+                else
+                {
+                    _logger.LogWarning("RemoveReactionAsync: Kafka message was not persisted.");
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Failed to remove reaction.");
+                }
             }
             catch (Exception ex)
             {
@@ -131,9 +197,30 @@ namespace NewsAppAPI.Controllers
                     ReactionType = reactionDto.ReactionType
                 };
 
-                await _reactionService.UpdateReactionAsync(reaction);
-                _logger.LogInformation($"Reaction updated: ArticleId={reactionDto.ArticleId}, UserId={userId}");
-                return Ok("Reaction updated successfully.");
+                // Produce Kafka message
+                var kafkaMessageDto = new KafkaMessageDto
+                {
+                    Topic = "reactions",
+                    Message = JsonConvert.SerializeObject(reaction),
+                    Operation = "update"
+                };
+
+                var deliveryResult = await _kafkaProducer.ProduceAsync(kafkaMessageDto);
+
+                if (deliveryResult.Status == PersistenceStatus.Persisted)
+                {
+                    // Update cache
+                    var cacheKey = $"reaction-{userId}-{reactionDto.ArticleId}";
+                    await _cacheService.SetAsync(cacheKey, reaction, TimeSpan.FromHours(1));
+
+                    _logger.LogInformation($"Reaction updated and cached: ArticleId={reactionDto.ArticleId}, UserId={userId}");
+                    return Ok("Reaction updated successfully.");
+                }
+                else
+                {
+                    _logger.LogWarning("UpdateReactionAsync: Kafka message was not persisted.");
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update reaction.");
+                }
             }
             catch (Exception ex)
             {

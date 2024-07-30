@@ -3,6 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using NewsAppAPI.DTOs;
 using NewsAppAPI.Models;
 using NewsAppAPI.Services.Interfaces;
+using NewsAppAPI.Cache;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NewsAppAPI.Controllers
 {
@@ -11,30 +17,43 @@ namespace NewsAppAPI.Controllers
     public class ArticleController : ControllerBase
     {
         private readonly IArticleService _articleService;
+        private readonly ICacheService _cacheService;
+        private readonly TimeSpan _cacheExpiration = TimeSpan.FromHours(1);
 
-        public ArticleController(IArticleService articleService)
+        public ArticleController(IArticleService articleService, ICacheService cacheService)
         {
-            _articleService = articleService;
+            _articleService = articleService ?? throw new ArgumentNullException(nameof(articleService));
+            _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
         }
 
         [HttpGet("status/{status}")]
         public async Task<IActionResult> GetAllPendingArticles(string status)
         {
+            var cacheKey = $"articles-status-{status}";
+            var cachedArticles = await _cacheService.GetAsync(cacheKey) as IEnumerable<NewsArticle>;
+
+            if (cachedArticles != null)
+            {
+                return Ok(cachedArticles);
+            }
+
             var articles = await _articleService.GetAllArticlesByStatusAsync(status);
+            await _cacheService.SetAsync(cacheKey, articles, _cacheExpiration);
+
             return Ok(articles);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetFilteredArticles(
-                    [FromQuery] string? status = null,
-                    [FromQuery] string? category = null,
-                    [FromQuery] DateTime? startDate = null,
-                    [FromQuery] DateTime? endDate = null,
-                    [FromQuery] string? author = null,
-                    [FromQuery] string? title = null,
-                    [FromQuery] string? contentKeyword = null,
-                    [FromQuery] int pageNumber = 1, 
-                    [FromQuery] int pageSize = 10)
+            [FromQuery] string? status = null,
+            [FromQuery] string? category = null,
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null,
+            [FromQuery] string? author = null,
+            [FromQuery] string? title = null,
+            [FromQuery] string? contentKeyword = null,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
             var filter = new ArticleFilter
             {
@@ -47,22 +66,36 @@ namespace NewsAppAPI.Controllers
                 ContentKeyword = contentKeyword
             };
 
-            var paginatedArticles = await _articleService.GetFilteredArticlesAsync(filter, pageNumber, pageSize);
+            var cacheKey = $"articles-filter-{pageNumber}-{pageSize}-{status}-{category}-{startDate}-{endDate}-{author}-{title}-{contentKeyword}";
+            var cachedArticles = await _cacheService.GetAsync(cacheKey) as PaginatedArticlesDto;
 
-            // You can return the PaginatedArticlesDto or directly return the result
+            if (cachedArticles != null)
+            {
+                return Ok(cachedArticles);
+            }
+
+            var paginatedArticles = await _articleService.GetFilteredArticlesAsync(filter, pageNumber, pageSize);
+            await _cacheService.SetAsync(cacheKey, paginatedArticles, _cacheExpiration);
+
             return Ok(paginatedArticles);
         }
-
-
-
-
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetArticleById(string id)
         {
+            var cacheKey = $"article-{id}";
+            var cachedArticle = await _cacheService.GetAsync(cacheKey) as NewsArticle;
+
+            if (cachedArticle != null)
+            {
+                return Ok(cachedArticle);
+            }
+
             try
             {
                 var article = await _articleService.GetArticleByIdAsync(id);
+                await _cacheService.SetAsync(cacheKey, article, _cacheExpiration);
+
                 return Ok(article);
             }
             catch (KeyNotFoundException ex)
@@ -74,9 +107,20 @@ namespace NewsAppAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> AddArticle([FromBody] NewsArticle article)
         {
+            if (article == null)
+            {
+                return BadRequest(new { Message = "Article is null." });
+            }
+
             try
             {
                 await _articleService.AddArticleAsync(article);
+
+                // Invalidate cache
+                await _cacheService.RemoveAsync($"articles-status-*");
+                await _cacheService.RemoveAsync($"articles-filter-*");
+                await _cacheService.RemoveAsync($"article-{article.Id}");
+
                 return CreatedAtAction(nameof(GetArticleById), new { id = article.Id }, article);
             }
             catch (ArgumentException ex)
@@ -91,6 +135,10 @@ namespace NewsAppAPI.Controllers
             try
             {
                 await _articleService.DeleteArticleAsync(id);
+
+                // Invalidate cache
+                await _cacheService.RemoveAsync($"article-{id}");
+
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
@@ -110,6 +158,15 @@ namespace NewsAppAPI.Controllers
             try
             {
                 await _articleService.BulkDeleteArticlesAsync(articleIds);
+
+                // Invalidate cache
+                foreach (var id in articleIds)
+                {
+                    await _cacheService.RemoveAsync($"article-{id}");
+                }
+                await _cacheService.RemoveAsync($"articles-status-*");
+                await _cacheService.RemoveAsync($"articles-filter-*");
+
                 return Ok(new { Message = "Articles deleted successfully." });
             }
             catch (Exception ex)
@@ -133,6 +190,15 @@ namespace NewsAppAPI.Controllers
             try
             {
                 await _articleService.BulkUpdateArticlesStatusAsync(request.Ids, request.Status);
+
+                // Invalidate cache
+                foreach (var id in request.Ids)
+                {
+                    await _cacheService.RemoveAsync($"article-{id}");
+                }
+                await _cacheService.RemoveAsync($"articles-status-*");
+                await _cacheService.RemoveAsync($"articles-filter-*");
+
                 return Ok(new { Message = "Articles status updated successfully." });
             }
             catch (Exception ex)
@@ -141,5 +207,4 @@ namespace NewsAppAPI.Controllers
             }
         }
     }
-
 }
