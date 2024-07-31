@@ -25,6 +25,8 @@ namespace NewsAppAPI.Kafka.Consumers
             _commentsTopic = configuration["Kafka:CommentsTopic"];
             _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
+
+            _logger.LogInformation("Kafka Consumer created with BootstrapServers: {BootstrapServers} and CommentsTopic: {CommentsTopic}", _bootstrapServers, _commentsTopic);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -39,6 +41,7 @@ namespace NewsAppAPI.Kafka.Consumers
 
             using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
             consumer.Subscribe(_commentsTopic);
+            _logger.LogInformation("Subscribed to Kafka topic: {Topic}", _commentsTopic);
 
             try
             {

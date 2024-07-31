@@ -13,6 +13,7 @@ using log4net;
 using log4net.Config;
 using NewsAppAPI.Kafka.Consumers;
 using NewsAppAPI.Kafka.Producers;
+using NewsAppAPI.Cache;
 
 namespace NewsAppAPI
 {
@@ -22,6 +23,9 @@ namespace NewsAppAPI
         {
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("defaultConnection")));
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            Console.WriteLine($"Connection String: {connectionString}");
+
         }
 
         #region RegisterRepositories
@@ -49,6 +53,11 @@ namespace NewsAppAPI
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IArticleService, ArticleService>();
             services.AddSingleton<IHostedService, ArticleFetchingService>();
+            // Register IMemoryCache
+            services.AddMemoryCache();
+
+            // Register ICacheService and other services
+            services.AddScoped<ICacheService, CacheService>();
 
         }
         #endregion RegisterServices
@@ -56,9 +65,18 @@ namespace NewsAppAPI
         #region kafkaservices
         private static void RegisterKafkaServices(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddScoped<IKafkaProducer, KafkaProducer>();
-            services.AddSingleton<IHostedService, CommentConsumer>();
-            services.AddSingleton<IHostedService, ReactionConsumer>();
+            try
+            {
+                services.AddScoped<IKafkaProducer, KafkaProducer>();
+                services.AddSingleton<IHostedService, CommentConsumer>();
+                services.AddSingleton<IHostedService, ReactionConsumer>();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error registering Kafka services: {ex.Message}");
+                throw; // Rethrow the exception to ensure it is not silently ignored
+            }
 
         }
         #endregion kafkaservices
@@ -149,11 +167,11 @@ namespace NewsAppAPI
                 googleOptions.ClientSecret = configuration["GoogleAuthSettings:Google:ClientSecret"];
             });
 
-            //services.AddAuthorization(options =>
-            //{
-            //    options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
-            //    options.AddPolicy("UserPolicy", policy => policy.RequireRole("User"));
-            //});
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("UserPolicy", policy => policy.RequireRole("User"));
+            });
 
 
             AddDbContext(services, configuration);
@@ -174,6 +192,26 @@ namespace NewsAppAPI
 
 
             var app = builder.Build();
+
+            // Read the port from configuration
+            //var port = builder.Configuration["Kestrel:Endpoints:Http:Url"];
+            //app.Urls.Add(port);
+
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<AppDbContext>();
+                    context.Database.Migrate();
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "An error occurred while migrating the database.");
+                }
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
