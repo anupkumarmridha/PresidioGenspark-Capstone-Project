@@ -1,23 +1,20 @@
 ﻿using Confluent.Kafka;
 using NewsAppAPI.DTOs;
 using NewsAppAPI.Models;
-using NewsAppAPI.Repositories.Interfaces;
-using System.Text.Json;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using System.Threading;
-using System.Threading.Tasks;
 using NewsAppAPI.Services.Interfaces;
+using System.Text.Json;
+
 
 namespace NewsAppAPI.Kafka.Consumers
 {
-    public class CommentConsumer : BackgroundService
+    public class CommentConsumer : IHostedService
     {
         private readonly string _bootstrapServers;
         private readonly string _commentsTopic;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<CommentConsumer> _logger;
+        private CancellationTokenSource _cancellationTokenSource;
+        private Task _executingTask;
 
         public CommentConsumer(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory, ILogger<CommentConsumer> logger)
         {
@@ -29,14 +26,21 @@ namespace NewsAppAPI.Kafka.Consumers
             _logger.LogInformation("Kafka Consumer created with BootstrapServers: {BootstrapServers} and CommentsTopic: {CommentsTopic}", _bootstrapServers, _commentsTopic);
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            _executingTask = Task.Run(() => ExecuteAsync(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
+            return Task.CompletedTask;
+        }
+
+        private async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var config = new ConsumerConfig
             {
                 BootstrapServers = _bootstrapServers,
                 GroupId = "comment-consumer-group",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
-                EnableAutoCommit = false // Manage offsets manually
+                EnableAutoCommit = false
             };
 
             using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
@@ -60,7 +64,7 @@ namespace NewsAppAPI.Kafka.Consumers
 
                             await PerformOperationAsync(commentService, deserializedComment, kafkaMessage.Operation);
 
-                            consumer.Commit(cr); // Commit the offset after processing the message
+                            consumer.Commit(cr);
                         }
                         else
                         {
@@ -111,6 +115,12 @@ namespace NewsAppAPI.Kafka.Consumers
             return !string.IsNullOrEmpty(kafkaMessageDto.Topic)
                 && !string.IsNullOrEmpty(kafkaMessageDto.Message)
                 && !string.IsNullOrEmpty(kafkaMessageDto.Operation);
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            _cancellationTokenSource.Cancel();
+            return Task.WhenAny(_executingTask, Task.Delay(Timeout.Infinite, cancellationToken));
         }
     }
 }

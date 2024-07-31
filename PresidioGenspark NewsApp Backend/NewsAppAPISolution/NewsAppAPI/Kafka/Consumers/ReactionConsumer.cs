@@ -1,23 +1,24 @@
 ﻿using Confluent.Kafka;
 using NewsAppAPI.DTOs;
 using NewsAppAPI.Models;
-using NewsAppAPI.Repositories.Interfaces;
-using System.Text.Json;
+using NewsAppAPI.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using NewsAppAPI.Services.Interfaces;
 
 namespace NewsAppAPI.Kafka.Consumers
 {
-    public class ReactionConsumer : BackgroundService
+    public class ReactionConsumer : IHostedService
     {
         private readonly string _bootstrapServers;
         private readonly string _reactionsTopic;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<ReactionConsumer> _logger;
+        private CancellationTokenSource _cancellationTokenSource;
+        private Task _executingTask;
 
         public ReactionConsumer(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory, ILogger<ReactionConsumer> logger)
         {
@@ -25,20 +26,29 @@ namespace NewsAppAPI.Kafka.Consumers
             _reactionsTopic = configuration["Kafka:ReactionsTopic"];
             _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
+            _logger.LogInformation("Kafka Consumer created with BootstrapServers: {BootstrapServers} and ReactionsTopic: {ReactionsTopic}", _bootstrapServers, _reactionsTopic);
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            _executingTask = Task.Run(() => ExecuteAsync(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
+            return Task.CompletedTask;
+        }
+
+        private async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var config = new ConsumerConfig
             {
                 BootstrapServers = _bootstrapServers,
                 GroupId = "reaction-consumer-group",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
-                EnableAutoCommit = false // Manage offsets manually
+                EnableAutoCommit = false
             };
 
             using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
             consumer.Subscribe(_reactionsTopic);
+            _logger.LogInformation("Subscribed to Kafka topic: {Topic}", _reactionsTopic);
 
             try
             {
@@ -108,6 +118,12 @@ namespace NewsAppAPI.Kafka.Consumers
             return !string.IsNullOrEmpty(kafkaMessageDto.Topic)
                 && !string.IsNullOrEmpty(kafkaMessageDto.Message)
                 && !string.IsNullOrEmpty(kafkaMessageDto.Operation);
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            _cancellationTokenSource.Cancel();
+            return Task.WhenAny(_executingTask, Task.Delay(Timeout.Infinite, cancellationToken));
         }
     }
 }

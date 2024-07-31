@@ -1,25 +1,16 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using NewsAppAPI.Models;
+﻿using NewsAppAPI.Models;
 using NewsAppAPI.Services.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using static Google.Apis.Requests.BatchRequest;
 
 namespace NewsAppAPI.Services.Classes
 {
-    public class ArticleFetchingService : BackgroundService
+    public class ArticleFetchingService : IHostedService, IDisposable
     {
         private readonly ILogger<ArticleFetchingService> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IServiceScopeFactory _scopeFactory;
+        private Timer _timer;
 
         public ArticleFetchingService(
             ILogger<ArticleFetchingService> logger,
@@ -31,28 +22,27 @@ namespace NewsAppAPI.Services.Classes
             _scopeFactory = scopeFactory;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public Task StartAsync(CancellationToken cancellationToken)
         {
-            // Introduce a delay before starting the fetch operation
-            //await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+            // Schedule the timer to call FetchAndStoreArticlesAsync every hour
+            _timer = new Timer(ExecuteAsync, null, TimeSpan.Zero, TimeSpan.FromDays(1));
 
-            while (!stoppingToken.IsCancellationRequested)
+            return Task.CompletedTask;
+        }
+
+        private async void ExecuteAsync(object state)
+        {
+            try
             {
-                try
-                {
-                    _logger.LogInformation("Fetching articles from InShorts API.");
+                _logger.LogInformation("Fetching articles from InShorts API.");
 
-                    await FetchAndStoreArticlesAsync();
+                await FetchAndStoreArticlesAsync();
 
-                    _logger.LogInformation("Articles fetched and stored successfully.");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "An error occurred while fetching articles.");
-                }
-
-                // Wait for 1 hour before the next fetch
-                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+                _logger.LogInformation("Articles fetched and stored successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while fetching articles.");
             }
         }
 
@@ -107,6 +97,15 @@ namespace NewsAppAPI.Services.Classes
             await Task.WhenAll(fetchTasks);
         }
 
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            _timer?.Change(Timeout.Infinite, 0);
+            return Task.CompletedTask;
+        }
 
+        public void Dispose()
+        {
+            _timer?.Dispose();
+        }
     }
 }
