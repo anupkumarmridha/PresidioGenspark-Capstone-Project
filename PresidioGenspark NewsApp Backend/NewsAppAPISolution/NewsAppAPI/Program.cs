@@ -52,34 +52,24 @@ namespace NewsAppAPI
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IArticleService, ArticleService>();
-            services.AddSingleton<IHostedService, ArticleFetchingService>();
             // Register IMemoryCache
             services.AddMemoryCache();
 
             // Register ICacheService and other services
             services.AddScoped<ICacheService, CacheService>();
+            services.AddScoped<IKafkaProducer, KafkaProducer>();
 
         }
         #endregion RegisterServices
 
-        #region kafkaservices
-        private static void RegisterKafkaServices(IServiceCollection services, IConfiguration configuration)
+        #region RegisterBackgroundServices
+        private static void RegisterBackgroundServices(IServiceCollection services)
         {
-            try
-            {
-                services.AddScoped<IKafkaProducer, KafkaProducer>();
-                services.AddSingleton<IHostedService, CommentConsumer>();
-                services.AddSingleton<IHostedService, ReactionConsumer>();
-            }
-            catch (Exception ex)
-            {
-                // Log the exception
-                Console.WriteLine($"Error registering Kafka services: {ex.Message}");
-                throw; // Rethrow the exception to ensure it is not silently ignored
-            }
-
+            services.AddHostedService<ArticleFetchingService>();
+            services.AddHostedService<CommentConsumer>();
+            services.AddHostedService<ReactionConsumer>();
         }
-        #endregion kafkaservices
+        #endregion endRegisterBackgroundServices
 
 
         #region AddJWTTokenSwaggerGen
@@ -178,7 +168,7 @@ namespace NewsAppAPI
 
             RegisterRepositories(services);
             RegisterServices(services);
-            RegisterKafkaServices(services, configuration);
+            RegisterBackgroundServices(services);
         }
         #endregion ConfigureServices
 

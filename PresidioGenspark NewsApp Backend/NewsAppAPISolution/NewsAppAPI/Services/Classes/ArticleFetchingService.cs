@@ -33,6 +33,9 @@ namespace NewsAppAPI.Services.Classes
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            // Introduce a delay before starting the fetch operation
+            //await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -49,7 +52,7 @@ namespace NewsAppAPI.Services.Classes
                 }
 
                 // Wait for 1 hour before the next fetch
-                await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
+                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
             }
         }
 

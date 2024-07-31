@@ -21,33 +21,33 @@ namespace NewsAppAPI.Repositories.Classes
         #region BulkInsertArticlesAsync
         public async Task BulkInsertArticlesAsync(IEnumerable<NewsArticle> articles, string category)
         {
-            // Fetch existing articles from the database
+            // Fetch existing article IDs and content hashes from the database for the current category
             var existingArticles = await _context.NewsArticles
                 .Where(a => a.Status == "Pending")
+                .Select(a => new { a.Id, ContentHash = a.Content.GetHashCode() })
                 .ToListAsync();
 
-            // Use a set to track existing article IDs for quick lookup
+            // Create a set of existing IDs and content hashes for quick lookup
             var existingArticleIdSet = new HashSet<string>(existingArticles.Select(a => a.Id));
-
-            // Use a set to track content hashes of existing articles for additional duplicate check
-            var existingContentHashes = new HashSet<string>(existingArticles.Select(a => a.Content.GetHashCode().ToString()));
+            var existingContentHashes = new HashSet<int>(existingArticles.Select(a => a.ContentHash));
 
             // Filter out articles that already exist based on ID or content hash
             var newArticles = articles
-                .Where(a => !existingArticleIdSet.Contains(a.Id) && !existingContentHashes.Contains(a.Content.GetHashCode().ToString()))
+                .Where(a => !existingArticleIdSet.Contains(a.Id) && !existingContentHashes.Contains(a.Content.GetHashCode()))
                 .ToList();
 
             if (newArticles.Any())
             {
                 await _context.NewsArticles.AddRangeAsync(newArticles);
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("Inserting {Count} new articles for category {Category}.", newArticles.Count, category);
+                _logger.LogInformation("Inserted {Count} new articles for category {Category}.", newArticles.Count, category);
             }
             else
             {
                 _logger.LogInformation("No new articles to insert for category {Category}.", category);
             }
         }
+
 
         #endregion BulkInsertArticlesAsync
 
