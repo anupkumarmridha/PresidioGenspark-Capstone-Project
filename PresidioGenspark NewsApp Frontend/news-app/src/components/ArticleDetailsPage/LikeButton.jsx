@@ -1,60 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { addReaction, updateReaction, removeReaction } from '../../services/api';
+import React from 'react';
+import { useCommentsAndReactions } from '../../context/CommentsAndReactionsContext';
 import { useAuth } from '../../context/AuthContext';
+import "../../styles/LikeButton.css"; // Ensure this import path is correct
 
-const LikeButton = ({ articleId, likes, setLikes, dislikes, setDislikes, userReaction, setUserReaction }) => {
-    const { token } = useAuth(); // Assuming you have a token in your AuthContext
+const LikeButton = ({ articleId }) => {
+    const { user } = useAuth();
+    const {
+        likes,
+        dislikes,
+        reactions,
+        handleAddReaction,
+        handleUpdateReaction,
+        handleRemoveReaction
+    } = useCommentsAndReactions();
+
+    const userReaction = reactions.find(r => r.userId === user.id);
 
     const handleLike = async () => {
-        try {
-            if (userReaction === 'Like') {
-                // If already liked, remove like
-                await removeReaction(articleId, token);
-                setLikes(prevLikes => prevLikes - 1);
-                setUserReaction(null);
-            } else if (userReaction === 'Dislike') {
-                // If disliked, update to like
-                await updateReaction(articleId, 'Like', token);
-                setLikes(prevLikes => prevLikes + 1);
-                setDislikes(prevDislikes => prevDislikes - 1);
-                setUserReaction('Like');
-            } else {
-                // If no reaction, add like
-                await addReaction(articleId, 'Like', token);
-                setLikes(prevLikes => prevLikes + 1);
-                setUserReaction('Like');
-            }
-        } catch (error) {
-            console.error('Failed to like article:', error);
+        if (!user) return alert('Please log in to react.');
+        if (userReaction?.reactionType === 0) {
+            await handleRemoveReaction(articleId);
+        } else if (userReaction?.reactionType === 1) {
+            await handleUpdateReaction(articleId, 0);
+        } else {
+            await handleAddReaction(articleId, 0);
         }
     };
 
     const handleDislike = async () => {
-        try {
-            if (userReaction === 'Dislike') {
-                // If already disliked, remove dislike
-                await removeReaction(articleId, token);
-                setDislikes(prevDislikes => prevDislikes - 1);
-                setUserReaction(null);
-            } else if (userReaction === 'Like') {
-                // If liked, update to dislike
-                await updateReaction(articleId, 'Dislike', token);
-                setLikes(prevLikes => prevLikes - 1);
-                setDislikes(prevDislikes => prevDislikes + 1);
-                setUserReaction('Dislike');
-            } else {
-                // If no reaction, add dislike
-                await addReaction(articleId, 'Dislike', token);
-                setDislikes(prevDislikes => prevDislikes + 1);
-                setUserReaction('Dislike');
-            }
-        } catch (error) {
-            console.error('Failed to dislike article:', error);
+        if (!user) return alert('Please log in to react.');
+        if (userReaction?.reactionType === 1) {
+            await handleRemoveReaction(articleId);
+        } else if (userReaction?.reactionType === 0) {
+            await handleUpdateReaction(articleId, 1);
+        } else {
+            await handleAddReaction(articleId, 1);
         }
     };
 
     return (
-        <div>
+        <div className="like-button-container">
             <button onClick={handleLike}>Like ({likes})</button>
             <button onClick={handleDislike}>Dislike ({dislikes})</button>
         </div>

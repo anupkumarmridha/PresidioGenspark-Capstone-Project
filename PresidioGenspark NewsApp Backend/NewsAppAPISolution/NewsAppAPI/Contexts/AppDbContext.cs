@@ -52,7 +52,7 @@ namespace NewsAppAPI.Contexts
             // Add unique index for comments to ensure a user cannot comment more than once on the same article
             modelBuilder.Entity<Comment>()
                 .HasIndex(c => new { c.UserId, c.ArticleId })
-                .IsUnique();
+                .IsUnique(false);
 
             // Reaction entity configuration
             modelBuilder.Entity<Reaction>()

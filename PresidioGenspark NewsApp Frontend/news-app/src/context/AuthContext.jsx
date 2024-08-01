@@ -6,31 +6,32 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(() => {
-        // Check localStorage for persisted user data
-        const savedUser = localStorage.getItem('user');
+        const savedUser = sessionStorage.getItem('user');
         return savedUser ? JSON.parse(savedUser) : null;
     });
     const [profile, setProfile] = useState(() => {
-        // Check localStorage for persisted profile data
-        const savedProfile = localStorage.getItem('profile');
+        const savedProfile = sessionStorage.getItem('profile');
         return savedProfile ? JSON.parse(savedProfile) : null;
     });
 
     const logOut = () => {
         googleLogout();
-        localStorage.removeItem('user');
-        localStorage.removeItem('profile');
+        sessionStorage.removeItem('user');
+        sessionStorage.removeItem('profile');
         setUser(null);
         setProfile(null);
     };
 
-    // Save user and profile to localStorage when they change
     useEffect(() => {
+        console.log('User:', user);
+        console.log('Profile:', profile);
+
         if (user) {
-            localStorage.setItem('user', JSON.stringify(user));
+            sessionStorage.setItem('user', JSON.stringify(user));
+            sessionStorage.setItem('token', user.token); // Save token from user
         }
         if (profile) {
-            localStorage.setItem('profile', JSON.stringify(profile));
+            sessionStorage.setItem('profile', JSON.stringify(profile));
         }
     }, [user, profile]);
 

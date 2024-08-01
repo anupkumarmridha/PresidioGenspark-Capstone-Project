@@ -1,69 +1,56 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { fetchArticleDetails, fetchArticleReactions } from '../../services/api';
 import Comments from './Comments';
 import LikeButton from './LikeButton';
+import { useCommentsAndReactions } from '../../context/CommentsAndReactionsContext';
 import { useAuth } from '../../context/AuthContext';
+import "../../styles/ArticleDetails.css";
 
 const Article = () => {
     const { articleId } = useParams();
-    const { user, token } = useAuth(); // Assuming you have a token in your AuthContext
-    const [article, setArticle] = useState(null);
-    const [likes, setLikes] = useState(0);
-    const [dislikes, setDislikes] = useState(0);
-    const [likeUsers, setLikeUsers] = useState([]);
-    const [dislikeUsers, setDislikeUsers] = useState([]);
-    const [userReaction, setUserReaction] = useState(null); // Track user's current reaction
-    const [commentsCount, setCommentsCount] = useState(0);
+    const { user } = useAuth();
+    const {
+        article,
+        likes,
+        dislikes,
+        likeUsers,
+        dislikeUsers,
+        commentsCount,
+        fetchArticle, // Fetch the article details
+        fetchComments
+    } = useCommentsAndReactions();
 
     useEffect(() => {
-        const fetchDetails = async () => {
-            try {
-                const articleData = await fetchArticleDetails(articleId);
-                setArticle(articleData);
-                setLikes(articleData.likes);
-                setDislikes(articleData.dislikes);
-                setCommentsCount(articleData.comments.length);
-
-                // Fetch reactions
-                const reactions = await fetchArticleReactions(articleId);
-                setLikeUsers(reactions.filter(r => r.reactionType === 0).map(r => r.userName));
-                setDislikeUsers(reactions.filter(r => r.reactionType === 1).map(r => r.userName));
-                setLikes(likeUsers.length);
-                setDislikes(dislikeUsers.length);
-
-                // Fetch user's current reaction
-                const userReaction = reactions.find(r => r.userName === user.userName);
-                setUserReaction(userReaction ? userReaction.reactionType : null);
-            } catch (error) {
-                console.error('Failed to fetch article details:', error);
-            }
-        };
-
-        fetchDetails();
-    }, [articleId, likeUsers, dislikeUsers, user.userName]);
+        fetchArticle(articleId);
+        fetchComments(articleId);
+    }, [articleId, fetchArticle, fetchComments]);
 
     if (!article) {
         return <p>Loading...</p>;
     }
 
+    const handleReadMoreClick = (e) => {
+        // Prevent default link behavior if needed
+        if (article.readMoreUrl) {
+            window.open(article.readMoreUrl, '_blank', 'noopener,noreferrer');
+        }
+    };
+
+
     return (
-        <div>
+        <div className="article-container">
             <h1>{article.title}</h1>
             <p>By {article.author}</p>
             <p>{new Date(article.date).toLocaleDateString()}</p>
             <img src={article.imageUrl} alt={article.title} />
             <p>{article.content}</p>
+            <p className="read-more-link">
+                <a href={article.readMoreUrl || '#'} onClick={handleReadMoreClick}>
+                    Read More
+                </a>
+            </p>
             {user ? (
-                <LikeButton
-                    articleId={articleId}
-                    likes={likes}
-                    setLikes={setLikes}
-                    dislikes={dislikes}
-                    setDislikes={setDislikes}
-                    userReaction={userReaction}
-                    setUserReaction={setUserReaction}
-                />
+                <LikeButton articleId={articleId} />
             ) : (
                 <div>
                     <p>Likes: {likes}</p>
@@ -73,7 +60,7 @@ const Article = () => {
                 </div>
             )}
             <p>{commentsCount} Comments</p>
-            <Comments articleId={articleId} setCommentsCount={setCommentsCount} isLoggedIn={!!user} />
+            <Comments articleId={articleId} />
         </div>
     );
 };

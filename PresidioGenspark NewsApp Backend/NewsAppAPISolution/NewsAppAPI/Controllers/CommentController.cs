@@ -31,10 +31,9 @@ namespace NewsAppAPI.Controllers
 
         public CommentController(
             ICommentService commentService,
-            IKafkaProducer kafkaProducer,
             ICacheService cacheService,
-            ILogger<CommentController> logger,
-            IConfiguration configuration)
+            ILogger<CommentController> logger
+            )
         {
             _commentService = commentService ?? throw new ArgumentNullException(nameof(commentService));
            

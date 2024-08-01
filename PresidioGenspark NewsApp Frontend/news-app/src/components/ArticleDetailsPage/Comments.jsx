@@ -1,55 +1,53 @@
-// src/components/Comments.jsx
 import React, { useState, useEffect } from 'react';
-import { postCommentOrReply, fetchComments } from '../../services/api';
+import { useCommentsAndReactions } from '../../context/CommentsAndReactionsContext';
+import { useAuth } from '../../context/AuthContext';
+import "../../styles/Comment.css";
 
-const Comments = ({ articleId, setCommentsCount, isLoggedIn }) => {
-    console.log('articleId:', articleId);
-    const [comments, setComments] = useState([]);
+const Comments = ({ articleId }) => {
+    const {
+        comments,
+        handlePostComment,
+        fetchComments
+    } = useCommentsAndReactions();
+    const { user } = useAuth();
     const [newComment, setNewComment] = useState('');
-    const [newReply, setNewReply] = useState({});
+    const [replyTo, setReplyTo] = useState(null);
+    const [replyText, setReplyText] = useState('');
 
     useEffect(() => {
-        const fetchArticleComments = async () => {
-            const fetchedComments = await fetchComments(articleId);
-            setComments(fetchedComments);
-            setCommentsCount(fetchedComments.length);
-        };
-
-        fetchArticleComments();
-    }, [articleId, setCommentsCount]);
+        fetchComments(articleId);
+    }, [articleId, fetchComments]);
 
     const handleCommentChange = (e) => setNewComment(e.target.value);
+    const handleReplyChange = (e) => setReplyText(e.target.value);
 
-    const handleReplyChange = (commentId, e) => {
-        setNewReply({ ...newReply, [commentId]: e.target.value });
-    };
-
-    const handlePostComment = async () => {
-        try {
-            const comment = await postCommentOrReply(articleId, newComment);
-            setComments([...comments, comment]);
+    const handlePostCommentClick = () => {
+        if (user) {
+            handlePostComment(articleId, newComment);
             setNewComment('');
-            setCommentsCount(comments.length + 1);
-        } catch (error) {
-            console.error('Error posting comment:', error);
+        } else {
+            alert('Please log in to post a comment.');
         }
     };
 
-    const handlePostReply = async (commentId) => {
-        try {
-            const reply = await postCommentOrReply(articleId, newReply[commentId], commentId);
-            setComments(comments.map(comment =>
-                comment.id === commentId ? { ...comment, replies: [...comment.replies, reply] } : comment
-            ));
-            setNewReply({ ...newReply, [commentId]: '' });
-        } catch (error) {
-            console.error('Error posting reply:', error);
+    const handleReplyClick = (commentId) => {
+        setReplyTo(commentId);
+        setReplyText('');
+    };
+
+    const handlePostReplyClick = () => {
+        if (user && replyTo !== null) {
+            handlePostComment(articleId, replyText, replyTo); // Assuming `handlePostComment` can take a `parentId` for replies
+            setReplyTo(null);
+            setReplyText('');
+        } else {
+            alert('Please log in to post a reply.');
         }
     };
 
     return (
-        <div>
-            {isLoggedIn ? (
+        <div className="comments-container">
+            {user ? (
                 <div>
                     <input
                         type="text"
@@ -57,28 +55,31 @@ const Comments = ({ articleId, setCommentsCount, isLoggedIn }) => {
                         onChange={handleCommentChange}
                         placeholder="Add a comment"
                     />
-                    <button onClick={handlePostComment}>Post Comment</button>
+                    <button onClick={handlePostCommentClick}>Post Comment</button>
                 </div>
             ) : (
-                <p>Log in to post comments and replies.</p>
+                <p>Please log in to post a comment.</p>
             )}
             {comments.map(comment => (
-                <div key={comment.id}>
-                    <p>{comment.content}</p>
-                    {isLoggedIn && (
-                        <div>
+                <div key={comment.id} className="comment">
+                    <p><strong>{comment.user.displayName}</strong>: {comment.content}</p>
+                    <p><small>{new Date(comment.createdAt).toLocaleString()}</small></p>
+                    {user && <button onClick={() => handleReplyClick(comment.id)}>Reply</button>}
+                    {replyTo === comment.id && (
+                        <div className="reply-box">
                             <input
                                 type="text"
-                                value={newReply[comment.id] || ''}
-                                onChange={(e) => handleReplyChange(comment.id, e)}
-                                placeholder="Reply"
+                                value={replyText}
+                                onChange={handleReplyChange}
+                                placeholder="Add a reply"
                             />
-                            <button onClick={() => handlePostReply(comment.id)}>Post Reply</button>
+                            <button onClick={handlePostReplyClick}>Post Reply</button>
                         </div>
                     )}
                     {comment.replies && comment.replies.map(reply => (
-                        <div key={reply.id}>
-                            <p>{reply.content}</p>
+                        <div key={reply.id} className="reply-container">
+                            <p><strong>{reply.user.displayName}</strong>: {reply.content}</p>
+                            <p><small>{new Date(reply.createdAt).toLocaleString()}</small></p>
                         </div>
                     ))}
                 </div>

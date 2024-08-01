@@ -47,7 +47,7 @@ export const fetchArticleDetails = async (id) => {
     }
 };
 
-export const fetchComments = async (articleId) => {
+export const fetchArticleComments = async (articleId) => {
     try {
         const response = await axios.get(`${API_BASE_URL}/api/Comment/article/${articleId}`);
         return response.data;

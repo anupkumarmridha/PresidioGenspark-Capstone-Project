@@ -60,7 +60,7 @@ namespace NewsAppAPI
 
             // Register ICacheService and other services
             services.AddSingleton<ICacheService, CacheService>();
-            services.AddScoped<IKafkaProducer, KafkaProducer>();
+            //services.AddScoped<IKafkaProducer, KafkaProducer>();
 
         }
         #endregion RegisterServices
