@@ -44,7 +44,7 @@ namespace NewsAppAPI.Controllers
 
         [HttpGet]
         [Route("article/{articleId}")]
-        [ProducesResponseType(typeof(IEnumerable<Comment>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<CommentDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorModel), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetCommentsByArticleIdAsync(string articleId)
         {
@@ -116,7 +116,7 @@ namespace NewsAppAPI.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorModel), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ErrorModel), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AddCommentAsync([FromBody] CommentFEDto commentDto)
+        public async Task<IActionResult> AddCommentAsync([FromBody] CommentFEDto commentFEDto)
         {
             if (!ModelState.IsValid)
             {
@@ -139,17 +139,17 @@ namespace NewsAppAPI.Controllers
                 }
                 var comment = new Comment
                 {
-                    ArticleId = commentDto.ArticleId,
-                    Content = commentDto.Content,
+                    ArticleId = commentFEDto.ArticleId,
+                    Content = commentFEDto.Content,
                     UserId = userId,
-                    ParentId = commentDto.ParentId,
+                    ParentId = commentFEDto.ParentId,
                     CreatedAt = DateTime.UtcNow
                 };
 
                 await _commentService.AddCommentAsync(comment);
                     var cacheKey = $"comments_{comment.ArticleId}";
                     await _cacheService.RemoveAsync(cacheKey); // Invalidate cache
-                    _logger.LogInformation($"Comment added and cache invalidated: ArticleId={commentDto.ArticleId}, UserId={userId}");
+                    _logger.LogInformation($"Comment added and cache invalidated: ArticleId={commentFEDto.ArticleId}, UserId={userId}");
                     return Ok("Comment added successfully.");
              
 
@@ -167,7 +167,7 @@ namespace NewsAppAPI.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorModel), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ErrorModel), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateCommentAsync(int id, [FromBody] CommentFEDto commentDto)
+        public async Task<IActionResult> UpdateCommentAsync(int id, [FromBody] CommentFEDto commentFEDto)
         {
 
             try
@@ -183,8 +183,8 @@ namespace NewsAppAPI.Controllers
                     return Unauthorized(new ErrorModel(401, "You are not authorized to update this comment."));
                 }
 
-                comment.Content = commentDto.Content;
-                comment.ParentId = commentDto.ParentId;
+                comment.Content = commentFEDto.Content;
+                comment.ParentId = commentFEDto.ParentId;
 
                 // Send message to Kafka
                 await _commentService.UpdateCommentAsync(comment);

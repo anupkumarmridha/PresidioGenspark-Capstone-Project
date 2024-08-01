@@ -7,19 +7,24 @@ const Comments = ({ articleId }) => {
     const {
         comments,
         handlePostComment,
+        handleUpdateComment,
+        handleDeleteComment,
         fetchComments
     } = useCommentsAndReactions();
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const [newComment, setNewComment] = useState('');
     const [replyTo, setReplyTo] = useState(null);
     const [replyText, setReplyText] = useState('');
+    const [editCommentId, setEditCommentId] = useState(null);
+    const [editCommentText, setEditCommentText] = useState('');
 
     useEffect(() => {
         fetchComments(articleId);
-    }, [articleId, fetchComments]);
+    }, [articleId, fetchComments, comments])
 
     const handleCommentChange = (e) => setNewComment(e.target.value);
     const handleReplyChange = (e) => setReplyText(e.target.value);
+    const handleEditChange = (e) => setEditCommentText(e.target.value);
 
     const handlePostCommentClick = () => {
         if (user) {
@@ -37,11 +42,30 @@ const Comments = ({ articleId }) => {
 
     const handlePostReplyClick = () => {
         if (user && replyTo !== null) {
-            handlePostComment(articleId, replyText, replyTo); // Assuming `handlePostComment` can take a `parentId` for replies
+            handlePostComment(articleId, replyText, replyTo);
             setReplyTo(null);
             setReplyText('');
         } else {
             alert('Please log in to post a reply.');
+        }
+    };
+
+    const handleEditClick = (commentId, currentText) => {
+        setEditCommentId(commentId);
+        setEditCommentText(currentText);
+    };
+
+    const handleUpdateCommentClick = () => {
+        if (editCommentId && editCommentText.trim()) {
+            handleUpdateComment(editCommentId, { content: editCommentText });
+            setEditCommentId(null);
+            setEditCommentText('');
+        }
+    };
+
+    const handleDeleteClick = (commentId) => {
+        if (window.confirm('Are you sure you want to delete this comment?')) {
+            handleDeleteComment(commentId);
         }
     };
 
@@ -62,9 +86,34 @@ const Comments = ({ articleId }) => {
             )}
             {comments.map(comment => (
                 <div key={comment.id} className="comment">
-                    <p><strong>{comment.user.displayName}</strong>: {comment.content}</p>
-                    <p><small>{new Date(comment.createdAt).toLocaleString()}</small></p>
-                    {user && <button onClick={() => handleReplyClick(comment.id)}>Reply</button>}
+                    {editCommentId === comment.id ? (
+                        <div>
+                            <input
+                                type="text"
+                                value={editCommentText}
+                                onChange={handleEditChange}
+                                placeholder="Edit your comment"
+                            />
+                            <button onClick={handleUpdateCommentClick}>Update</button>
+                            <button onClick={() => setEditCommentId(null)}>Cancel</button>
+                        </div>
+                    ) : (
+                        <div>
+                            <p><strong>{comment.userName}</strong>: {comment.content}</p>
+                            <p><small>{new Date(comment.createdAt).toLocaleString()}</small></p>
+                            {user && (
+                                <>
+                                    <button onClick={() => handleReplyClick(comment.id)}>Reply</button>
+                                    {profile.id === comment.userId && ( // Check if the user is the owner of the comment
+                                        <>
+                                            <button onClick={() => handleEditClick(comment.id, comment.content)}>Edit</button>
+                                            <button onClick={() => handleDeleteClick(comment.id)}>Delete</button>
+                                        </>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
                     {replyTo === comment.id && (
                         <div className="reply-box">
                             <input
@@ -78,7 +127,13 @@ const Comments = ({ articleId }) => {
                     )}
                     {comment.replies && comment.replies.map(reply => (
                         <div key={reply.id} className="reply-container">
-                            <p><strong>{reply.user.displayName}</strong>: {reply.content}</p>
+                            {profile.id === reply.userId && ( // Check if the user is the owner of the comment
+                                        <>
+                                            <button onClick={() => handleEditClick(comment.id, comment.content)}>Edit</button>
+                                            <button onClick={() => handleDeleteClick(comment.id)}>Delete</button>
+                                        </>
+                                    )}
+                            <p><strong>{reply.userName}</strong>: {reply.content}</p>
                             <p><small>{new Date(reply.createdAt).toLocaleString()}</small></p>
                         </div>
                     ))}
@@ -87,5 +142,6 @@ const Comments = ({ articleId }) => {
         </div>
     );
 };
+
 
 export default Comments;

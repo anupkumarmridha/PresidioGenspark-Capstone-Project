@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback } from 'react';
 import { fetchArticleDetails, fetchArticleComments, postCommentOrReply, updateComment, deleteComment, addReaction, updateReaction, removeReaction, fetchArticleReactions } from '../services/api';
 import { useAuth } from './AuthContext';
 
@@ -44,31 +44,36 @@ export const CommentsAndReactionsProvider = ({ children }) => {
     const fetchComments = useCallback(async (articleId) => {
         try {
             const comments = await fetchArticleComments(articleId);
-            // console.log(comments);
-            setComments(comments || []);
+            setComments(comments.map((comment, index) => ({
+                ...comment,
+                id: comment.id ?? `comment-${index}-${Date.now()}`
+            })));
         } catch (error) {
-            console.error('Failed to fetch Artilce Comments details:', error);
+            console.error('Failed to fetch article comments:', error);
         }
     }, []);
 
     const handlePostComment = useCallback(async (articleId, content, parentId = null) => {
         try {
-            console.log("Current token:", token); // Check token value here
-
             if (!token) {
                 console.error('Token is not available');
                 return;
             }
             const comment = await postCommentOrReply(articleId, content, token, parentId);
-            setComments(prevComments => [...prevComments, comment]);
+            setComments(prevComments => [
+                ...prevComments,
+                { ...comment, id: comment.id ?? `comment-${prevComments.length}-${Date.now()}` }
+            ]);
             setCommentsCount(prevCount => prevCount + 1);
         } catch (error) {
             console.error('Error posting comment:', error);
         }
     }, [token]);
+    
 
     const handleUpdateComment = useCallback(async (commentId, data) => {
         try {
+            console.log(commentId, data);
             await updateComment(commentId, token, data);
             setComments(prevComments =>
                 prevComments.map(comment => comment.id === commentId ? { ...comment, ...data } : comment)

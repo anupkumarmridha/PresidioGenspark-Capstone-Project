@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NewsAppAPI.Contexts;
+using NewsAppAPI.DTOs;
 using NewsAppAPI.Models;
 using NewsAppAPI.Repositories.Interfaces;
 
@@ -14,14 +15,46 @@ namespace NewsAppAPI.Repositories.Classes
             _context = context;
         }
 
-        public async Task<IEnumerable<Comment>> GetCommentsByArticleIdAsync(string articleId)
+        private CommentDto MapToDto(Comment comment)
         {
-            return await _context.Comments
-                .Include(c => c.User)
-                .Include(c => c.Replies)
-                .Where(c => c.ArticleId == articleId)
-                .ToListAsync();
+            if (comment == null) return null;
+
+            var commentDto = new CommentDto
+            {
+                Id = comment.Id,
+                ArticleId = comment.ArticleId,
+                Content = comment.Content,
+                CreatedAt = comment.CreatedAt,
+                UserId = comment.UserId,
+                UserName =  comment.User.DisplayName,
+                ParentId = comment.ParentId,
+                Replies = comment.Replies.Select(r => new CommentDto
+                {
+                    Id = r.Id,
+                    Content = r.Content,
+                    CreatedAt = r.CreatedAt,
+                    UserId = r.UserId,
+                    UserName = r.User.DisplayName,
+                    ParentId = r.ParentId
+                }).ToList()
+            };
+
+            return commentDto;
         }
+
+
+        public async Task<IEnumerable<CommentDto>> GetCommentsByArticleIdAsync(string articleId)
+        {
+            var comments = await _context.Comments
+                   .Include(c => c.User)
+                   .Include(c => c.Replies)
+                   .Where(c => c.ArticleId == articleId)
+                   .ToListAsync();
+
+            return comments.Select(MapToDto).ToList();
+        }
+
+
 
         public async Task<Comment> GetCommentByIdAsync(int id)
         {

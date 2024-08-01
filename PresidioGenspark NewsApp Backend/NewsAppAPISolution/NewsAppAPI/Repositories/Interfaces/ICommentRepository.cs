@@ -1,10 +1,11 @@
-﻿using NewsAppAPI.Models;
+﻿using NewsAppAPI.DTOs;
+using NewsAppAPI.Models;
 
 namespace NewsAppAPI.Repositories.Interfaces
 {
     public interface ICommentRepository
     {
-        Task<IEnumerable<Comment>> GetCommentsByArticleIdAsync(string articleId);
+        Task<IEnumerable<CommentDto>> GetCommentsByArticleIdAsync(string articleId);
         Task<Comment> GetCommentByIdAsync(int id);
         Task AddCommentAsync(Comment comment);
         Task AddCommentsAsync(IEnumerable<Comment> comments);

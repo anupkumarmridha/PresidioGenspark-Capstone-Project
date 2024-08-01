@@ -2,6 +2,7 @@
 using NewsAppAPI.Services.Interfaces;
 using NewsAppAPI.Exceptions;
 using NewsAppAPI.Repositories.Interfaces;
+using NewsAppAPI.DTOs;
 
 namespace NewsAppAPI.Services.Classes
 {
@@ -16,7 +17,7 @@ namespace NewsAppAPI.Services.Classes
             _logger = logger;
         }
 
-        public async Task<IEnumerable<Comment>> GetCommentsByArticleIdAsync(string articleId)
+        public async Task<IEnumerable<CommentDto>> GetCommentsByArticleIdAsync(string articleId)
         {
             try
             {
