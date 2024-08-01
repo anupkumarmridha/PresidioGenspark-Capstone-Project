@@ -1,4 +1,5 @@
-﻿using NewsAppAPI.Models;
+﻿using NewsAppAPI.DTOs;
+using NewsAppAPI.Models;
 
 namespace NewsAppAPI.Services.Interfaces
 {
@@ -8,5 +9,6 @@ namespace NewsAppAPI.Services.Interfaces
         Task AddReactionAsync(Reaction reaction);
         Task RemoveReactionAsync(int userId, string articleId);
         Task UpdateReactionAsync(Reaction reaction);
+        Task<IEnumerable<ArticleReactionDto>> GetAllReactionsByArticleAsync(string articleId);
     }
 }

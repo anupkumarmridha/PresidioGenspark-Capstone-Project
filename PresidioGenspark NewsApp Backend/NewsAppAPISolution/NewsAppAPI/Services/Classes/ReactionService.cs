@@ -1,7 +1,7 @@
-﻿using NewsAppAPI.Models;
+﻿using NewsAppAPI.DTOs;
+using NewsAppAPI.Models;
 using NewsAppAPI.Repositories.Interfaces;
 using NewsAppAPI.Services.Interfaces;
-
 
 namespace NewsAppAPI.Services.Classes
 {
@@ -33,6 +33,18 @@ namespace NewsAppAPI.Services.Classes
             {
                 _logger.LogError(ex, "An error occurred while adding a reaction.");
                 throw; // Re-throw the exception after logging it
+            }
+        }
+
+        public async Task<IEnumerable<ArticleReactionDto>> GetAllReactionsByArticleAsync(string articleId)
+        {
+            try
+            {
+                return await _reactionRepository.GetAllReactionsByArticleAsync(articleId); 
+            }catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving all reactions for an article.");
+                throw;
             }
         }
 

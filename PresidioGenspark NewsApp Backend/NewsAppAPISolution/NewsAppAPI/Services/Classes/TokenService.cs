@@ -21,22 +21,14 @@ namespace NewsAppAPI.Services.Classes
         }
         public string GenerateToken(UserDto user)
         {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Email),
-                new Claim(ClaimTypes.Name, user.DisplayName),
+            var claims = new List<Claim>(){
+                new Claim(ClaimTypes.Name, user.Id.ToString()),
                 new Claim(ClaimTypes.Role, user.Role)
             };
             var credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(
-                issuer: null,
-                audience: null,
-                claims: claims,
-                expires: DateTime.UtcNow.AddDays(7),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var myToken = new JwtSecurityToken(null, null, claims, expires: DateTime.Now.AddDays(20), signingCredentials: credentials);
+            string token = new JwtSecurityTokenHandler().WriteToken(myToken);
+            return token;
         }
     }
 }

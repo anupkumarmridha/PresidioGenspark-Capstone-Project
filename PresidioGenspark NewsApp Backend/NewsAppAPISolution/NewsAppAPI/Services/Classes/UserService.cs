@@ -46,12 +46,15 @@ namespace NewsAppAPI.Services.Classes
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                await _userRepository.AddUserAsync(user);
+                user = await _userRepository.AddUserAsync(user);
+                if(user == null)
+                    throw new Exception("Failed to create user");
             }
 
             // Map user data to UserDto
             var userDto = new UserDto
             {
+                Id = user.Id,
                 Email = user.Email,
                 DisplayName = user.DisplayName,
                 Role = user.Role,

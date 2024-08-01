@@ -52,11 +52,14 @@ namespace NewsAppAPI
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IArticleService, ArticleService>();
+            services.AddScoped<ICommentService, CommentService>();
+            services.AddScoped<IReactionService, ReactionService>();
+
             // Register IMemoryCache
             services.AddMemoryCache();
 
             // Register ICacheService and other services
-            services.AddScoped<ICacheService, CacheService>();
+            services.AddSingleton<ICacheService, CacheService>();
             services.AddScoped<IKafkaProducer, KafkaProducer>();
 
         }
@@ -66,8 +69,8 @@ namespace NewsAppAPI
         private static void RegisterBackgroundServices(IServiceCollection services)
         {
             services.AddHostedService<ArticleFetchingService>();
-            services.AddHostedService<CommentConsumer>();
-            services.AddHostedService<ReactionConsumer>();
+            //services.AddHostedService<CommentConsumer>();
+            //services.AddHostedService<ReactionConsumer>();
         }
         #endregion endRegisterBackgroundServices
 
@@ -157,11 +160,11 @@ namespace NewsAppAPI
                 googleOptions.ClientSecret = configuration["GoogleAuthSettings:Google:ClientSecret"];
             });
 
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
-                options.AddPolicy("UserPolicy", policy => policy.RequireRole("User"));
-            });
+            //services.AddAuthorization(options =>
+            //{
+            //    options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+            //    options.AddPolicy("UserPolicy", policy => policy.RequireRole("User"));
+            //});
 
 
             AddDbContext(services, configuration);

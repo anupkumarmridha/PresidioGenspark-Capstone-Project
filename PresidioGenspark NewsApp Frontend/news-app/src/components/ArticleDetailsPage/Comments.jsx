@@ -1,8 +1,9 @@
 // src/components/Comments.jsx
 import React, { useState, useEffect } from 'react';
-import { postComment, postReply, fetchComments } from '../../services/api';
+import { postCommentOrReply, fetchComments } from '../../services/api';
 
 const Comments = ({ articleId, setCommentsCount, isLoggedIn }) => {
+    console.log('articleId:', articleId);
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState('');
     const [newReply, setNewReply] = useState({});
@@ -24,25 +25,38 @@ const Comments = ({ articleId, setCommentsCount, isLoggedIn }) => {
     };
 
     const handlePostComment = async () => {
-        const comment = await postComment(articleId, newComment);
-        setComments([...comments, comment]);
-        setNewComment('');
-        setCommentsCount(comments.length + 1);
+        try {
+            const comment = await postCommentOrReply(articleId, newComment);
+            setComments([...comments, comment]);
+            setNewComment('');
+            setCommentsCount(comments.length + 1);
+        } catch (error) {
+            console.error('Error posting comment:', error);
+        }
     };
 
     const handlePostReply = async (commentId) => {
-        const reply = await postReply(commentId, newReply[commentId]);
-        setComments(comments.map(comment =>
-            comment.id === commentId ? { ...comment, replies: [...comment.replies, reply] } : comment
-        ));
-        setNewReply({ ...newReply, [commentId]: '' });
+        try {
+            const reply = await postCommentOrReply(articleId, newReply[commentId], commentId);
+            setComments(comments.map(comment =>
+                comment.id === commentId ? { ...comment, replies: [...comment.replies, reply] } : comment
+            ));
+            setNewReply({ ...newReply, [commentId]: '' });
+        } catch (error) {
+            console.error('Error posting reply:', error);
+        }
     };
 
     return (
         <div>
             {isLoggedIn ? (
                 <div>
-                    <input type="text" value={newComment} onChange={handleCommentChange} placeholder="Add a comment" />
+                    <input
+                        type="text"
+                        value={newComment}
+                        onChange={handleCommentChange}
+                        placeholder="Add a comment"
+                    />
                     <button onClick={handlePostComment}>Post Comment</button>
                 </div>
             ) : (
@@ -50,7 +64,7 @@ const Comments = ({ articleId, setCommentsCount, isLoggedIn }) => {
             )}
             {comments.map(comment => (
                 <div key={comment.id}>
-                    <p>{comment.text}</p>
+                    <p>{comment.content}</p>
                     {isLoggedIn && (
                         <div>
                             <input
@@ -62,9 +76,9 @@ const Comments = ({ articleId, setCommentsCount, isLoggedIn }) => {
                             <button onClick={() => handlePostReply(comment.id)}>Post Reply</button>
                         </div>
                     )}
-                    {comment.replies.map(reply => (
+                    {comment.replies && comment.replies.map(reply => (
                         <div key={reply.id}>
-                            <p>{reply.text}</p>
+                            <p>{reply.content}</p>
                         </div>
                     ))}
                 </div>

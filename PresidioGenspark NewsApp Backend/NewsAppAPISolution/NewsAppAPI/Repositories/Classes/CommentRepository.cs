@@ -33,17 +33,28 @@ namespace NewsAppAPI.Repositories.Classes
 
         public async Task AddCommentAsync(Comment comment)
         {
-            var existingComment = await _context.Comments
-                .FirstOrDefaultAsync(c => c.UserId == comment.UserId && c.ArticleId == comment.ArticleId && c.Content == comment.Content);
-
-            if (existingComment != null)
+            if (comment.ParentId.HasValue)
             {
-                throw new InvalidOperationException("Duplicate comment detected.");
+                // Ensure ParentId exists in the database if needed
+                var parentComment = await _context.Comments.FindAsync(comment.ParentId.Value);
+                if (parentComment == null)
+                {
+                   
+                    throw new InvalidOperationException("Invalid ParentId specified.");
+                }
             }
 
-            await _context.Comments.AddAsync(comment);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.Comments.AddAsync(comment);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
+
 
         public async Task UpdateCommentAsync(Comment comment)
         {

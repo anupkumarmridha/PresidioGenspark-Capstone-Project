@@ -136,27 +136,34 @@ namespace NewsAppAPI.Repositories.Classes
                 Id = article.Id,
                 Title = article.Title,
                 Content = article.Content,
+                Author = article.Author,
+                Category = article.Category,
+                ImageUrl = article.ImageUrl,
+                ReadMoreUrl = article.ReadMoreUrl,
                 CreatedAt = article.Date,
                 TotalLikes = totalLikes,
                 TotalDislikes = totalDislikes,
                 TotalComments = totalComments,
-                Comments = article.Comments.Select(c => new CommentDto
-                {
-                    Id = c.Id,
-                    Content = c.Content,
-                    CreatedAt = c.CreatedAt,
-                    UserId = c.UserId,
-                    ParentId = c.ParentId,
-                    Replies = c.Replies.Select(r => new CommentDto
-                    {
-                        Id = r.Id,
-                        Content = r.Content,
-                        CreatedAt = r.CreatedAt,
-                        UserId = r.UserId,
-                        ParentId = r.ParentId
-                    }).ToList()
-                }).ToList()
+                //Comments = article.Comments.Select(c => new CommentDto
+                //{
+                //    Id = c.Id,
+                //    Content = c.Content,
+                //    CreatedAt = c.CreatedAt,
+                //    UserId = c.UserId,
+                //    ParentId = c.ParentId,
+                //    Replies = c.Replies.Select(r => new CommentDto
+                //    {
+                //        Id = r.Id,
+                //        Content = r.Content,
+                //        CreatedAt = r.CreatedAt,
+                //        UserId = r.UserId,
+                //        ParentId = r.ParentId
+                //    }).ToList()
+                //}).ToList()
+
             };
+
+
 
             return articleDto;
         }

@@ -40,7 +40,8 @@ namespace NewsAppAPI.Contexts
                 .HasOne(c => c.Parent)
                 .WithMany(p => p.Replies)
                 .HasForeignKey(c => c.ParentId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
 
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.NewsArticle)

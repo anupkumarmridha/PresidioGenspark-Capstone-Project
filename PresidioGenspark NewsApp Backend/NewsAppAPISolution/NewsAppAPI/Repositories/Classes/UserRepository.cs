@@ -13,10 +13,11 @@ namespace NewsAppAPI.Repositories.Classes
             _context = context;
         }
 
-        public async Task AddUserAsync(User user)
+        public async Task<User> AddUserAsync(User user)
         {
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
+            return await _context.Users.FindAsync(user.Id);
         }
 
         public async Task<User> GetUserByEmailAsync(string email)
