@@ -58,32 +58,32 @@ const Comments = ({ articleId }) => {
     const handleUpdateCommentClick = () => {
         if (editCommentId && editCommentText.trim()) {
             // Find the comment or reply to be updated
-            const commentOrReply = comments.find(comment => 
-                comment.id === editCommentId || 
+            const commentOrReply = comments.find(comment =>
+                comment.id === editCommentId ||
                 (comment.replies && comment.replies.some(reply => reply.id === editCommentId))
             );
-    
+
             if (commentOrReply) {
                 let parentId = null;
-    
+
                 // Check if editCommentId is for a reply
                 if (commentOrReply.replies && commentOrReply.replies.some(reply => reply.id === editCommentId)) {
                     parentId = commentOrReply.id;
                 }
-    
+
                 const data = {
                     articleId: articleId,
                     content: editCommentText,
                     parentId: parentId
                 };
-                
+
                 handleUpdateComment(editCommentId, data);
                 setEditCommentId(null);
                 setEditCommentText('');
             }
         }
     };
-    
+
 
     const handleDeleteClick = (commentId) => {
         if (window.confirm('Are you sure you want to delete this comment?')) {
@@ -101,7 +101,9 @@ const Comments = ({ articleId }) => {
                         onChange={handleCommentChange}
                         placeholder="Add a comment"
                     />
-                    <button onClick={handlePostCommentClick}>Post Comment</button>
+                    <button onClick={handlePostCommentClick}>
+                        <i className="fas fa-paper-plane">
+                        </i> Post Comment</button>
                 </div>
             ) : (
                 <p>Please log in to post a comment.</p>
@@ -116,23 +118,37 @@ const Comments = ({ articleId }) => {
                                 onChange={handleEditChange}
                                 placeholder="Edit your comment"
                             />
-                            <button onClick={handleUpdateCommentClick}>Update</button>
-                            <button onClick={() => setEditCommentId(null)}>Cancel</button>
+                            <button onClick={handleUpdateCommentClick}>
+                                <i className="fas fa-save"></i> Update
+                            </button>
+                            <button onClick={() => setEditCommentId(null)}>
+                                <i className="fas fa-times"></i> Cancel
+                            </button>
                         </div>
                     ) : (
                         <div>
                             <p><strong>{comment.userName}</strong>: {comment.content}</p>
                             <p><small>{new Date(comment.createdAt).toLocaleString()}</small></p>
                             {user && (
-                                <>
-                                    <button onClick={() => handleReplyClick(comment.id)}>Reply</button>
+                                <div className="comment-actions">
+                                    <button onClick={() => handleReplyClick(comment.id)}>
+                                        <i className="fas fa-reply"></i> Reply
+                                    </button>
                                     {profile.id === comment.userId && (
                                         <>
-                                            <button onClick={() => handleEditClick(comment.id, comment.content)}>Edit</button>
-                                            <button onClick={() => handleDeleteClick(comment.id)}>Delete</button>
+                                            <button
+                                                className="edit-button"
+                                                onClick={() => handleEditClick(comment.id, comment.content)}>
+                                                <i className="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button
+                                                className="delete-button"
+                                                onClick={() => handleDeleteClick(comment.id)}>
+                                                <i className="fas fa-trash"></i> Delete
+                                            </button>
                                         </>
                                     )}
-                                </>
+                                </div>
                             )}
                         </div>
                     )}
@@ -157,18 +173,29 @@ const Comments = ({ articleId }) => {
                                         onChange={handleEditChange}
                                         placeholder="Edit your reply"
                                     />
-                                    <button onClick={handleUpdateCommentClick}>Update</button>
-                                    <button onClick={() => setEditCommentId(null)}>Cancel</button>
+                                    <button onClick={handleUpdateCommentClick}>
+                                        <i className="fas fa-save"></i> Update                                        </button>
+                                    <button onClick={() => setEditCommentId(null)}>
+                                        <i className="fas fa-times"></i> Cancel
+                                    </button>
                                 </div>
                             ) : (
                                 <div>
                                     <p><strong>{reply.userName}</strong>: {reply.content}</p>
                                     <p><small>{new Date(reply.createdAt).toLocaleString()}</small></p>
                                     {user && profile.id === reply.userId && (
-                                        <>
-                                            <button onClick={() => handleEditClick(reply.id, reply.content)}>Edit</button>
-                                            <button onClick={() => handleDeleteClick(reply.id)}>Delete</button>
-                                        </>
+                                        <div className="comment-actions">
+                                            <button
+                                                className="edit-button"
+                                                onClick={() => handleEditClick(reply.id, reply.content)}>
+                                                <i className="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button
+                                                className="delete-button"
+                                                onClick={() => handleDeleteClick(reply.id)}>
+                                                <i className="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             )}

@@ -85,8 +85,11 @@
     background-color: #007bff;
 }
 
+.comment-actions button.edit-button {
+    background-color: #ffa007;
+}
 .comment-actions button.edit-button:hover {
-    background-color: #0056b3;
+    background-color: #b36e00;
 }
 
 .comment-actions button.delete-button {
