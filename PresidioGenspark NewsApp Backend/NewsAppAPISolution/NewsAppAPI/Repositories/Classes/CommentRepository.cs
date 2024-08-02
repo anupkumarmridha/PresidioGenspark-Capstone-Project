@@ -46,13 +46,47 @@ namespace NewsAppAPI.Repositories.Classes
         public async Task<IEnumerable<CommentDto>> GetCommentsByArticleIdAsync(string articleId)
         {
             var comments = await _context.Comments
-                   .Include(c => c.User)
-                   .Include(c => c.Replies)
-                   .Where(c => c.ArticleId == articleId)
-                   .ToListAsync();
+                .Include(c => c.User)
+                .Include(c => c.Replies)
+                .Where(c => c.ArticleId == articleId)
+                .ToListAsync();
 
-            return comments.Select(MapToDto).ToList();
+            var commentDtos = comments
+                .Where(c => c.ParentId == null) // Only top-level comments
+                .Select(comment => new CommentDto
+                {
+                    Id = comment.Id,
+                    ArticleId = comment.ArticleId,
+                    Content = comment.Content,
+                    CreatedAt = comment.CreatedAt,
+                    UserId = comment.UserId,
+                    UserName = comment.User.DisplayName,
+                    ParentId = comment.ParentId,
+                    Replies = GetReplies(comment.Id, comments)
+                })
+                .ToList();
+
+            return commentDtos;
         }
+
+        private List<CommentDto> GetReplies(int parentId, List<Comment> allComments)
+        {
+            return allComments
+                .Where(c => c.ParentId == parentId)
+                .Select(reply => new CommentDto
+                {
+                    Id = reply.Id,
+                    ArticleId = reply.ArticleId,
+                    Content = reply.Content,
+                    CreatedAt = reply.CreatedAt,
+                    UserId = reply.UserId,
+                    UserName = reply.User.DisplayName,
+                    ParentId = reply.ParentId,
+                    Replies = GetReplies(reply.Id, allComments) // Recursively fetch replies of replies
+                })
+                .ToList();
+        }
+
 
 
 

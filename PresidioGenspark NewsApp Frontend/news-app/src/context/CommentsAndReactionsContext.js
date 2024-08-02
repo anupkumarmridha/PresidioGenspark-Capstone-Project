@@ -73,7 +73,8 @@ export const CommentsAndReactionsProvider = ({ children }) => {
 
     const handleUpdateComment = useCallback(async (commentId, data) => {
         try {
-            console.log(commentId, data);
+            // console.log("comment id : ",commentId);
+            // console.log(data);
             await updateComment(commentId, token, data);
             setComments(prevComments =>
                 prevComments.map(comment => comment.id === commentId ? { ...comment, ...data } : comment)

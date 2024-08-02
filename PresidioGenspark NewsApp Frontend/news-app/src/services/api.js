@@ -86,6 +86,8 @@ export const postCommentOrReply = async (articleId, content, token, parentId = n
 };
 
 export const updateComment= async (commentId, token, data) => {
+    // console.log("comment Id API: ",commentId);
+    // console.log("data API: ",data);
     const response = await fetch(`${API_BASE_URL}/api/Comment/update/${commentId}`, {
         method: 'PUT',
         headers: {
