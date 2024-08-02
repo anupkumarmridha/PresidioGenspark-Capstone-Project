@@ -1,28 +1,44 @@
 .like-button-container {
     display: flex;
     gap: 10px;
-    justify-content: center; /* Center the buttons */
+    justify-content: center;
     margin-top: 10px;
 }
 
 .like-button-container button {
+    display: flex;
+    align-items: center;
     padding: 10px 20px;
     font-size: 1rem;
     cursor: pointer;
     border: none;
     border-radius: 5px;
-    background-color: #007bff;
-    color: white;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, color 0.3s;
+    gap: 5px;
 }
 
-.like-button-container button:hover {
+.like-button-container .like-button {
+    background-color: #007bff;
+    color: white;
+}
+
+.like-button-container .like-button:hover {
     background-color: #0056b3;
 }
 
-@media (max-width: 600px) {
-    .like-button-container button {
-        font-size: 0.9rem; /* Slightly smaller text on mobile */
-        padding: 8px 16px;
-    }
+.like-button-container .liked {
+    background-color: #28a745; /* Green for liked */
+}
+
+.like-button-container .dislike-button {
+    background-color: #dc3545; /* Red for disliked */
+    color: white;
+}
+
+.like-button-container .disliked {
+    background-color: #dc3545;
+}
+
+.like-button-container .active {
+    font-weight: bold; /* Example for active state */
 }

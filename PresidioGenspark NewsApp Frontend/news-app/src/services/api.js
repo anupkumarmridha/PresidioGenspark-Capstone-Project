@@ -86,8 +86,6 @@ export const postCommentOrReply = async (articleId, content, token, parentId = n
 };
 
 export const updateComment= async (commentId, token, data) => {
-    // console.log("comment Id API: ",commentId);
-    // console.log("data API: ",data);
     const response = await fetch(`${API_BASE_URL}/api/Comment/update/${commentId}`, {
         method: 'PUT',
         headers: {
@@ -118,48 +116,65 @@ export const deleteComment = async (commentId, token) => {
 }
 
 
-export const addReaction= async (articleId, reactionType, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/Reaction/add`, {
-        method: 'POST',
-        headers: {
-            'Accept': 'text/plain',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ articleId, reactionType })
-    });
-    if (!response.ok) {
-        throw new Error('Failed to add reaction');
+export const addReaction = async (articleId, reactionType, token) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/Reaction/add`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'text/plain',
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ articleId, reactionType })
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to add reaction: ${response.statusText}`);
+        }
+        return await response.text();
+    } catch (error) {
+        console.error('Error adding reaction:', error);
+        throw error;
     }
-    return response.text();
-}
-export const updateReaction= async (articleId, reactionType, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/Reaction/update`, {
-        method: 'PUT',
-        headers: {
-            'Accept': 'text/plain',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ articleId, reactionType })
-    });
-    if (!response.ok) {
-        throw new Error('Failed to update reaction');
+};
+
+export const updateReaction = async (articleId, reactionType, token) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/Reaction/update`, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'text/plain',
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ articleId, reactionType })
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to update reaction: ${response.statusText}`);
+        }
+        return await response.text();
+    } catch (error) {
+        console.error('Error updating reaction:', error);
+        throw error;
     }
-    return response.text();
-}
+};
 
 export const removeReaction = async (articleId, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/Reaction/remove?articleId=${articleId}`, {
-        method: 'DELETE',
-        headers: {
-            'Accept': 'text/plain',
-            'Authorization': `Bearer ${token}`
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/Reaction/remove?articleId=${articleId}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'text/plain',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to remove reaction: ${response.statusText}`);
         }
-    });
-    if (!response.ok) {
-        throw new Error('Failed to remove reaction');
+        return await response.text();
+    } catch (error) {
+        console.error('Error removing reaction:', error);
+        throw error;
     }
-    return response.text();
-}
+};
+
 

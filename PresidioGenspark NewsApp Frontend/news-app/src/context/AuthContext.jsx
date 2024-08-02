@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         // console.log('User:', user);
-        console.log('Profile:', profile);
+        // console.log('Profile:', profile);
 
         if (user) {
             sessionStorage.setItem('user', JSON.stringify(user));

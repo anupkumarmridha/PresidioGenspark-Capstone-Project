@@ -13,10 +13,11 @@ export const CommentsAndReactionsProvider = ({ children }) => {
     const [likeUsers, setLikeUsers] = useState([]);
     const [dislikeUsers, setDislikeUsers] = useState([]);
     const [commentsCount, setCommentsCount] = useState(0);
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const token = user?.token;
-
+    
     const fetchArticle = useCallback(async (articleId) => {
+        console.log("token", token);
         const articleData = await fetchArticleDetails(articleId);
         // console.log(articleData);
         setArticle(articleData);
@@ -30,6 +31,7 @@ export const CommentsAndReactionsProvider = ({ children }) => {
         try {
             // Fetch reactions and update state
             const reactionsData = await fetchArticleReactions(articleId);
+            // console.log("reaction data -> ",reactionsData);
             const likeUsersList = reactionsData.filter(r => r.reactionType === 0).map(r => r.userName);
             const dislikeUsersList = reactionsData.filter(r => r.reactionType === 1).map(r => r.userName);
             setLikeUsers(likeUsersList);
@@ -96,50 +98,31 @@ export const CommentsAndReactionsProvider = ({ children }) => {
 
     const handleAddReaction = useCallback(async (articleId, reactionType) => {
         try {
-            const updatedReaction = await addReaction(articleId, reactionType, token);
-            setReactions(prevReactions => [...prevReactions, updatedReaction]);
-            if (reactionType === 0) {
-                setLikes(prevLikes => prevLikes + 1);
-            } else {
-                setDislikes(prevDislikes => prevDislikes + 1);
-            }
+            await addReaction(articleId, reactionType, token);
+            await fetchReactions(articleId); // Refetch reactions to ensure state is updated
         } catch (error) {
             console.error('Error adding reaction:', error);
         }
-    }, [token]);
-
+    }, [token, fetchReactions]);
+    
     const handleUpdateReaction = useCallback(async (articleId, reactionType) => {
         try {
-            const updatedReaction = await updateReaction(articleId, reactionType, token);
-            setReactions(prevReactions => prevReactions.map(reaction => reaction.articleId === articleId ? updatedReaction : reaction));
-            // Adjust likes/dislikes counters accordingly
-            if (reactionType === 0) {
-                setLikes(prevLikes => prevLikes + 1);
-                setDislikes(prevDislikes => prevDislikes - 1);
-            } else {
-                setLikes(prevLikes => prevLikes - 1);
-                setDislikes(prevDislikes => prevDislikes + 1);
-            }
+            await updateReaction(articleId, reactionType, token);
+            await fetchReactions(articleId); // Refetch reactions to ensure state is updated
         } catch (error) {
             console.error('Error updating reaction:', error);
         }
-    }, [token]);
-
+    }, [token, fetchReactions]);
+    
     const handleRemoveReaction = useCallback(async (articleId) => {
         try {
             await removeReaction(articleId, token);
-            setReactions(prevReactions => prevReactions.filter(reaction => reaction.articleId !== articleId));
-            // Adjust likes/dislikes counters accordingly
-            const userReaction = reactions.find(r => r.articleId === articleId);
-            if (userReaction.reactionType === 0) {
-                setLikes(prevLikes => prevLikes - 1);
-            } else {
-                setDislikes(prevDislikes => prevDislikes - 1);
-            }
+            await fetchReactions(articleId); // Refetch reactions to ensure state is updated
         } catch (error) {
             console.error('Error removing reaction:', error);
         }
-    }, [token, reactions]);
+    }, [token, fetchReactions]);
+    
 
     return (
         <CommentsAndReactionsContext.Provider

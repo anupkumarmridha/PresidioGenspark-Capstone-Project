@@ -63,11 +63,17 @@ namespace NewsAppAPI.Controllers
                 _logger.LogInformation($"Reaction added and cached: ArticleId={reactionDto.ArticleId}, UserId={userId}");
                 return Ok("Reaction added successfully.");
             }
+            catch(InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Duplicate reaction detected.");
+                return BadRequest("Duplicate reaction detected.");
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while adding reaction.");
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error occurred while adding reaction.");
             }
+            
         }
 
         [HttpGet]

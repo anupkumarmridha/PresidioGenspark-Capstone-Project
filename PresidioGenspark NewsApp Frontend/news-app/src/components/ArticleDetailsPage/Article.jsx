@@ -41,7 +41,7 @@ const Article = () => {
         <div className="article-container">
             <h1>{article.title}</h1>
             <p>By {article.author}</p>
-            <p>{new Date(article.date).toLocaleDateString()}</p>
+            <p>{new Date(article.createdAt).toLocaleString()}</p>
             <img src={article.imageUrl} alt={article.title} />
             <p>{article.content}</p>
             <p className="read-more-link">
