@@ -20,7 +20,7 @@ const Comments = ({ articleId }) => {
 
     useEffect(() => {
         fetchComments(articleId);
-    }, [articleId, fetchComments, comments])
+    }, [articleId, fetchComments, comments]);
 
     const handleCommentChange = (e) => setNewComment(e.target.value);
     const handleReplyChange = (e) => setReplyText(e.target.value);
@@ -57,11 +57,33 @@ const Comments = ({ articleId }) => {
 
     const handleUpdateCommentClick = () => {
         if (editCommentId && editCommentText.trim()) {
-            handleUpdateComment(editCommentId, { content: editCommentText });
-            setEditCommentId(null);
-            setEditCommentText('');
+            // Find the comment or reply to be updated
+            const commentOrReply = comments.find(comment => 
+                comment.id === editCommentId || 
+                (comment.replies && comment.replies.some(reply => reply.id === editCommentId))
+            );
+    
+            if (commentOrReply) {
+                let parentId = null;
+    
+                // Check if editCommentId is for a reply
+                if (commentOrReply.replies && commentOrReply.replies.some(reply => reply.id === editCommentId)) {
+                    parentId = commentOrReply.id;
+                }
+    
+                const data = {
+                    articleId: articleId,
+                    content: editCommentText,
+                    parentId: parentId
+                };
+                
+                handleUpdateComment(editCommentId, data);
+                setEditCommentId(null);
+                setEditCommentText('');
+            }
         }
     };
+    
 
     const handleDeleteClick = (commentId) => {
         if (window.confirm('Are you sure you want to delete this comment?')) {
@@ -104,7 +126,7 @@ const Comments = ({ articleId }) => {
                             {user && (
                                 <>
                                     <button onClick={() => handleReplyClick(comment.id)}>Reply</button>
-                                    {profile.id === comment.userId && ( // Check if the user is the owner of the comment
+                                    {profile.id === comment.userId && (
                                         <>
                                             <button onClick={() => handleEditClick(comment.id, comment.content)}>Edit</button>
                                             <button onClick={() => handleDeleteClick(comment.id)}>Delete</button>
@@ -127,14 +149,29 @@ const Comments = ({ articleId }) => {
                     )}
                     {comment.replies && comment.replies.map(reply => (
                         <div key={reply.id} className="reply-container">
-                            {profile.id === reply.userId && ( // Check if the user is the owner of the comment
+                            {editCommentId === reply.id ? (
+                                <div>
+                                    <input
+                                        type="text"
+                                        value={editCommentText}
+                                        onChange={handleEditChange}
+                                        placeholder="Edit your reply"
+                                    />
+                                    <button onClick={handleUpdateCommentClick}>Update</button>
+                                    <button onClick={() => setEditCommentId(null)}>Cancel</button>
+                                </div>
+                            ) : (
+                                <div>
+                                    <p><strong>{reply.userName}</strong>: {reply.content}</p>
+                                    <p><small>{new Date(reply.createdAt).toLocaleString()}</small></p>
+                                    {user && profile.id === reply.userId && (
                                         <>
-                                            <button onClick={() => handleEditClick(comment.id, comment.content)}>Edit</button>
-                                            <button onClick={() => handleDeleteClick(comment.id)}>Delete</button>
+                                            <button onClick={() => handleEditClick(reply.id, reply.content)}>Edit</button>
+                                            <button onClick={() => handleDeleteClick(reply.id)}>Delete</button>
                                         </>
                                     )}
-                            <p><strong>{reply.userName}</strong>: {reply.content}</p>
-                            <p><small>{new Date(reply.createdAt).toLocaleString()}</small></p>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -142,6 +179,5 @@ const Comments = ({ articleId }) => {
         </div>
     );
 };
-
 
 export default Comments;
