@@ -17,13 +17,11 @@ const Article = () => {
         dislikeUsers,
         commentsCount,
         fetchArticle, // Fetch the article details
-        fetchComments
     } = useCommentsAndReactions();
 
     useEffect(() => {
         fetchArticle(articleId);
-        fetchComments(articleId);
-    }, [articleId, fetchArticle, fetchComments]);
+    }, [articleId, fetchArticle]);
 
     if (!article) {
         return <p>Loading...</p>;
