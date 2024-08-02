@@ -29,6 +29,7 @@ export const updateArticleStatus = async (ids, status) => {
             ids,
             status
         });
+        // console.log(response.data);
         return response.data;
     } catch (error) {
         console.error('Failed to update article status:', error);

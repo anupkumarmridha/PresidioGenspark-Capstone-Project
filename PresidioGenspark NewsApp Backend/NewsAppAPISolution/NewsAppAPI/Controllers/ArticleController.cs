@@ -66,16 +66,16 @@ namespace NewsAppAPI.Controllers
                 ContentKeyword = contentKeyword
             };
 
-            var cacheKey = $"articles-filter-{pageNumber}-{pageSize}-{status}-{category}-{startDate}-{endDate}-{author}-{title}-{contentKeyword}";
-            var cachedArticles = await _cacheService.GetAsync(cacheKey) as PaginatedArticlesDto;
+            //var cacheKey = $"articles-filter-{pageNumber}-{pageSize}-{status}-{category}-{startDate}-{endDate}-{author}-{title}-{contentKeyword}";
+            //var cachedArticles = await _cacheService.GetAsync(cacheKey) as PaginatedArticlesDto;
 
-            if (cachedArticles != null)
-            {
-                return Ok(cachedArticles);
-            }
+            //if (cachedArticles != null)
+            //{
+            //    return Ok(cachedArticles);
+            //}
 
             var paginatedArticles = await _articleService.GetFilteredArticlesAsync(filter, pageNumber, pageSize);
-            await _cacheService.SetAsync(cacheKey, paginatedArticles, _cacheExpiration);
+            //await _cacheService.SetAsync(cacheKey, paginatedArticles, _cacheExpiration);
 
             return Ok(paginatedArticles);
         }

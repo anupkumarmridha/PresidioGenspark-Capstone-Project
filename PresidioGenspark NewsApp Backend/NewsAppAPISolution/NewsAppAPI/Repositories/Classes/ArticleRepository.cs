@@ -21,9 +21,8 @@ namespace NewsAppAPI.Repositories.Classes
         #region BulkInsertArticlesAsync
         public async Task BulkInsertArticlesAsync(IEnumerable<NewsArticle> articles, string category)
         {
-            // Fetch existing article IDs and content hashes from the database for the current category
+            // Fetch existing article IDs and content hashes from the database for all statuses
             var existingArticles = await _context.NewsArticles
-                .Where(a => a.Status == "Pending")
                 .Select(a => new { a.Id, ContentHash = a.Content.GetHashCode() })
                 .ToListAsync();
 
@@ -47,6 +46,7 @@ namespace NewsAppAPI.Repositories.Classes
                 _logger.LogInformation("No new articles to insert for category {Category}.", category);
             }
         }
+
 
 
         #endregion BulkInsertArticlesAsync
