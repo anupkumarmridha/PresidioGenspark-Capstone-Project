@@ -7,6 +7,7 @@ import Pagination from './Pagination';
 import Filters from './Filters';
 import { toast } from 'react-toastify';
 import { useOutletContext } from 'react-router-dom';
+import Loading from '../Loading';
 
 const categories = ["all", "business", "sports", "technology", "entertainment"];
 const truncateContent = (content) => {
@@ -86,15 +87,27 @@ const ArticleManagement = () => {
     };
 
     const confirmUpdate = async () => {
+        setIsLoading(true); // Start loading for update
         try {
             await updateArticleStatus(selectedArticles, status);
             toast.success('Articles updated successfully');
-            fetchArticlesData();
+    
+            // Update the local state to reflect the changes
+            setArticles((prevArticles) => 
+                prevArticles.map((article) => 
+                    selectedArticles.includes(article.id) ? { ...article, status } : article
+                )
+            );
+    
+            setSelectAll(false);
+            setSelectedArticles([]);
         } catch (error) {
             toast.error('Error updating articles:', error);
         }
+        setIsLoading(false); // Stop loading for update
         setModalIsOpen(false);
     };
+
 
     const cancelUpdate = () => {
         setModalIsOpen(false);
@@ -144,6 +157,7 @@ const ArticleManagement = () => {
     return (
         <div className="article-management">
             <h1>Article Management</h1>
+            {isLoading && <Loading />}
             <Filters
                 filterStatus={filterStatus}
                 category={category}

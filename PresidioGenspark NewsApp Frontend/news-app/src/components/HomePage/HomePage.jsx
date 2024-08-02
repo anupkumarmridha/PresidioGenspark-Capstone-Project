@@ -1,9 +1,9 @@
-// src/components/HomePage/HomePage.jsx
 import React, { useState, useEffect } from 'react';
-import { useLocation, useOutletContext } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import ArticleList from './ArticleList';
 import Pagination from '../AdminPortal/Pagination';
 import { articleService } from '../../services/articleService';
+import Loading from '../Loading';
 
 const HomePage = () => {
     const [articles, setArticles] = useState([]);
@@ -12,22 +12,27 @@ const HomePage = () => {
     const [category, setCategory] = useState('all');
     const [isLoading, setIsLoading] = useState(false);
     const location = useLocation();
-    const { searchQuery } = useOutletContext(); // Get search query from Outlet context
+    const navigate = useNavigate();
+    const { searchQuery } = useOutletContext();
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
         const categoryParam = queryParams.get('category') || 'all';
+        const pageParam = parseInt(queryParams.get('page'), 10) || 1;
         setCategory(categoryParam);
-        setCurrentPage(1); // Reset to page 1 on category change
+        setCurrentPage(pageParam);
+        fetchArticlesData(categoryParam, searchQuery, pageParam);
+    }, [location.search]);
 
-        fetchArticlesData(categoryParam, searchQuery, 1); // Fetch data with new page number
-    }, [category, searchQuery, location.search]);
+    useEffect(() => {
+        fetchArticlesData(category, searchQuery, currentPage);
+        navigate(`?category=${category}&page=${currentPage}`);
+    }, [currentPage, category, searchQuery, navigate]);
 
     const fetchArticlesData = async (categoryParam, searchQuery, pageNumber) => {
         setIsLoading(true);
         try {
             const data = await articleService.fetchArticles(categoryParam, searchQuery, pageNumber);
-            console.log('Fetched data:', data);
             if (data.articles) {
                 setArticles(data.articles);
                 setTotalCount(data.totalCount);
@@ -44,10 +49,11 @@ const HomePage = () => {
 
     return (
         <div className="home-page">
+            {isLoading && <Loading />} {/* Display loading overlay when isLoading is true */}
             <ArticleList articles={articles} currentPage={currentPage} />
             <Pagination
                 pageNumber={currentPage}
-                pageSize={10} // Set the page size
+                pageSize={10}
                 totalCount={totalCount}
                 onPageChange={setCurrentPage}
                 isLoading={isLoading}
