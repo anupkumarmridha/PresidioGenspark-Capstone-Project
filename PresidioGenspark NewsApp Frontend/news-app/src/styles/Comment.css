@@ -79,11 +79,14 @@
     gap: 10px;
 }
 
+
 .comment-actions button {
     padding: 5px 10px;
     font-size: 0.8rem;
     background-color: #007bff;
 }
+
+
 
 .comment-actions button.edit-button {
     background-color: #ffa007;
@@ -97,6 +100,30 @@
 }
 
 .comment-actions button.delete-button:hover {
+    background-color: #c82333;
+}
+.reply-comment-actions {
+    display: flex;
+   }
+
+.reply-comment-actions button {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    background-color: #007bff;
+}
+
+.reply-comment-actions button.edit-button {
+    background-color: #ffa007;
+}
+.reply-comment-actions button.edit-button:hover {
+    background-color: #b36e00;
+}
+
+.reply-comment-actions button.delete-button {
+    background-color: #dc3545;
+}
+
+.reply-comment-actions button.delete-button:hover {
     background-color: #c82333;
 }
 

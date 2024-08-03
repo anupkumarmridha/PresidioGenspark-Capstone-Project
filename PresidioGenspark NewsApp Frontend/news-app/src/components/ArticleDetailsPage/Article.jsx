@@ -57,7 +57,6 @@ const Article = () => {
                     <p>Disliked by: {dislikeUsers.join(', ')}</p>
                 </div>
             )}
-            <p>{commentsCount} Comments</p>
             <Comments articleId={articleId} />
         </div>
     );

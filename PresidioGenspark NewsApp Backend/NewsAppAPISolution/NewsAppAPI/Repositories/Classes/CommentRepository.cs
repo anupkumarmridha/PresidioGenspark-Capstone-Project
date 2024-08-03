@@ -49,43 +49,43 @@ namespace NewsAppAPI.Repositories.Classes
                 .Include(c => c.User)
                 .Include(c => c.Replies)
                 .Where(c => c.ArticleId == articleId)
+                .OrderByDescending(c => c.CreatedAt) // FILO order for comments
                 .ToListAsync();
 
-            var commentDtos = comments
+            var commentDict = comments.ToDictionary(c => c.Id);
+
+            var topLevelComments = comments
                 .Where(c => c.ParentId == null) // Only top-level comments
-                .Select(comment => new CommentDto
-                {
-                    Id = comment.Id,
-                    ArticleId = comment.ArticleId,
-                    Content = comment.Content,
-                    CreatedAt = comment.CreatedAt,
-                    UserId = comment.UserId,
-                    UserName = comment.User.DisplayName,
-                    ParentId = comment.ParentId,
-                    Replies = GetReplies(comment.Id, comments)
-                })
+                .Select(comment => MapToDto(comment, commentDict))
                 .ToList();
 
-            return commentDtos;
+            return topLevelComments;
         }
 
-        private List<CommentDto> GetReplies(int parentId, List<Comment> allComments)
+        private CommentDto MapToDto(Comment comment, Dictionary<int, Comment> commentDict)
         {
-            return allComments
+            return new CommentDto
+            {
+                Id = comment.Id,
+                ArticleId = comment.ArticleId,
+                Content = comment.Content,
+                CreatedAt = comment.CreatedAt,
+                UserId = comment.UserId,
+                UserName = comment.User.DisplayName,
+                ParentId = comment.ParentId,
+                Replies = GetReplies(comment.Id, commentDict)
+            };
+        }
+
+        private List<CommentDto> GetReplies(int parentId, Dictionary<int, Comment> commentDict)
+        {
+            return commentDict.Values
                 .Where(c => c.ParentId == parentId)
-                .Select(reply => new CommentDto
-                {
-                    Id = reply.Id,
-                    ArticleId = reply.ArticleId,
-                    Content = reply.Content,
-                    CreatedAt = reply.CreatedAt,
-                    UserId = reply.UserId,
-                    UserName = reply.User.DisplayName,
-                    ParentId = reply.ParentId,
-                    Replies = GetReplies(reply.Id, allComments) // Recursively fetch replies of replies
-                })
+                .OrderBy(c => c.CreatedAt) // FIFO order for replies
+                .Select(reply => MapToDto(reply, commentDict)) // Map to DTO
                 .ToList();
         }
+
 
 
 
@@ -139,11 +139,18 @@ namespace NewsAppAPI.Repositories.Classes
 
         public async Task DeleteCommentAsync(int id)
         {
-            var comment = await _context.Comments.FindAsync(id);
+            var comment = await _context.Comments
+                .Include(c => c.Replies)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
             if (comment == null)
             {
                 throw new InvalidOperationException("Comment not found.");
+            }
+
+            if (comment.Replies.Any())
+            {
+                _context.Comments.RemoveRange(comment.Replies);
             }
 
             _context.Comments.Remove(comment);

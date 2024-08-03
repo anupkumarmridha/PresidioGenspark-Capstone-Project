@@ -1,26 +1,76 @@
-import React, { useState, useEffect } from 'react';
-import { useCommentsAndReactions } from '../../context/CommentsAndReactionsContext';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import "../../styles/Comment.css";
+import { fetchArticleComments, postCommentOrReply, updateComment, deleteComment } from '../../services/api';
 
 const Comments = ({ articleId }) => {
-    const {
-        comments,
-        handlePostComment,
-        handleUpdateComment,
-        handleDeleteComment,
-        fetchComments
-    } = useCommentsAndReactions();
     const { user, profile } = useAuth();
     const [newComment, setNewComment] = useState('');
     const [replyTo, setReplyTo] = useState(null);
     const [replyText, setReplyText] = useState('');
     const [editCommentId, setEditCommentId] = useState(null);
     const [editCommentText, setEditCommentText] = useState('');
+    const [commentsChanged, setCommentsChanged] = useState(false);
+    const [comments, setComments] = useState([]);
+    const [commentsCount, setCommentsCount] = useState(0);
+    const token = user?.token;
+
+    const fetchComments = useCallback(async (articleId) => {
+        try {
+            const comments = await fetchArticleComments(articleId);
+            setComments(comments.map((comment, index) => ({
+                ...comment,
+                id: comment.id ?? `comment-${index}-${Date.now()}`
+            })));
+            setCommentsCount(comments.length);
+        } catch (error) {
+            console.error('Failed to fetch article comments:', error);
+        }
+    }, []);
+
+    const handlePostComment = useCallback(async (articleId, content, parentId = null) => {
+        try {
+            if (!token) {
+                console.error('Token is not available');
+                return;
+            }
+            await postCommentOrReply(articleId, content, token, parentId);
+            setCommentsChanged(prev => !prev); // Toggle commentsChanged
+        } catch (error) {
+            console.error('Error posting comment:', error);
+        }
+    }, [token]);
+    
+
+    const handleUpdateComment = useCallback(async (commentId, data) => {
+        try {
+            // console.log("comment id : ",commentId);
+            // console.log(data);
+            await updateComment(commentId, token, data);
+            setCommentsChanged(prev => !prev); // Toggle commentsChanged
+            // setComments(prevComments =>
+            //     prevComments.map(comment => comment.id === commentId ? { ...comment, ...data } : comment)
+            // );
+
+        } catch (error) {
+            console.error('Error updating comment:', error);
+        }
+    }, [token]);
+
+    const handleDeleteComment = useCallback(async (commentId) => {
+        try {
+            await deleteComment(commentId, token);
+            setCommentsChanged(prev => !prev); // Toggle commentsChanged
+            // setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
+            // setCommentsCount(prevCount => prevCount - 1);
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+        }
+    }, [token]);
 
     useEffect(() => {
         fetchComments(articleId);
-    }, [articleId, fetchComments, comments]);
+    }, [articleId, fetchComments, commentsChanged]);
 
     const handleCommentChange = (e) => setNewComment(e.target.value);
     const handleReplyChange = (e) => setReplyText(e.target.value);
@@ -30,6 +80,7 @@ const Comments = ({ articleId }) => {
         if (user) {
             handlePostComment(articleId, newComment);
             setNewComment('');
+            
         } else {
             alert('Please log in to post a comment.');
         }
@@ -93,6 +144,7 @@ const Comments = ({ articleId }) => {
 
     return (
         <div className="comments-container">
+        <p>{commentsCount} Comments</p>
             {user ? (
                 <div>
                     <input
@@ -180,11 +232,11 @@ const Comments = ({ articleId }) => {
                                     </button>
                                 </div>
                             ) : (
-                                <div>
+                                <div className='reply-container '>
                                     <p><strong>{reply.userName}</strong>: {reply.content}</p>
                                     <p><small>{new Date(reply.createdAt).toLocaleString()}</small></p>
                                     {user && profile.id === reply.userId && (
-                                        <div className="comment-actions">
+                                        <div className="reply-comment-actions">
                                             <button
                                                 className="edit-button"
                                                 onClick={() => handleEditClick(reply.id, reply.content)}>

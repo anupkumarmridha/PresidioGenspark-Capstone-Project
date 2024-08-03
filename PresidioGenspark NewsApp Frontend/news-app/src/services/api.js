@@ -86,35 +86,53 @@ export const postCommentOrReply = async (articleId, content, token, parentId = n
     }
 };
 
-export const updateComment= async (commentId, token, data) => {
-    const response = await fetch(`${API_BASE_URL}/api/Comment/update/${commentId}`, {
-        method: 'PUT',
-        headers: {
-            'Accept': 'text/plain',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-    });
-    if (!response.ok) {
-        throw new Error('Failed to update comment');
+export const updateComment = async (commentId, token, data) => {
+    try {
+        console.log("comment Id:", commentId);
+        console.log("data:", data);
+        console.log("token:", token);
+
+        const response = await fetch(`${API_BASE_URL}/api/Comment/update/${commentId}`, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'text/plain',
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to update comment: ${response.statusText}`);
+        }
+
+        return response.text();
+    } catch (error) {
+        console.error('Failed to update comment:', error);
+        throw error;
     }
-    return response.text();
-}
+};
 
 export const deleteComment = async (commentId, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/Comment/delete/${commentId}`, {
-        method: 'DELETE',
-        headers: {
-            'Accept': 'text/plain',
-            'Authorization': `Bearer ${token}`
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/Comment/delete/${commentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'text/plain',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete comment: ${response.statusText}`);
         }
-    });
-    if (!response.ok) {
-        throw new Error('Failed to delete comment');
+
+        return response.text();
+    } catch (error) {
+        console.error('Failed to delete comment:', error);
+        throw error;
     }
-    return response.text();
-}
+};
 
 
 export const addReaction = async (articleId, reactionType, token) => {
