@@ -168,6 +168,7 @@ namespace NewsAppAPI
             AddJWTTokenSwaggerGen(services);
 
             // Retrieve secrets from Azure Key Vault
+
             var keyVaultName = configuration["KeyVault:Name"];
             var kvUri = $"https://{keyVaultName}.vault.azure.net/";
 
@@ -182,7 +183,7 @@ namespace NewsAppAPI
             //var googleClientId = configuration["GoogleAuthSettings:Google:ClientId"];
             //var googleClientSecret = configuration["GoogleAuthSettings:Google:ClientSecret"];
 
-            await Console.Out.WriteLineAsync(sqlServerConnectionString);
+            //await Console.Out.WriteLineAsync(sqlServerConnectionString);
             //await Console.Out.WriteLineAsync(googleClientId);
             //await Console.Out.WriteLineAsync(googleClientSecret);
 

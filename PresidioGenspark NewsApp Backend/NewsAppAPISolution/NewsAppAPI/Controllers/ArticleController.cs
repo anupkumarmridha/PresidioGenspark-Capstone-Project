@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace NewsAppAPI.Controllers
 {
@@ -174,7 +175,7 @@ namespace NewsAppAPI.Controllers
                 return StatusCode(500, new { Message = $"An error occurred: {ex.Message}" });
             }
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpPatch("bulk/status")]
         public async Task<IActionResult> BulkUpdateArticlesStatus([FromBody] BulkUpdateRequest request)
         {

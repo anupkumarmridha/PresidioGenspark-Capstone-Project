@@ -17,7 +17,7 @@ export const CommentsAndReactionsProvider = ({ children }) => {
     const token = user?.token;
     
     const fetchArticle = useCallback(async (articleId) => {
-        console.log("token", token);
+        // console.log("token", token);
         const articleData = await fetchArticleDetails(articleId);
         // console.log(articleData);
         setArticle(articleData);

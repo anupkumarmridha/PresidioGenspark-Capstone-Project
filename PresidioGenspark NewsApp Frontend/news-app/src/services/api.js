@@ -23,11 +23,16 @@ export const fetchArticles = async (filters) => {
     }
 };
 
-export const updateArticleStatus = async (ids, status) => {
+export const updateArticleStatus = async (ids, status, token) => {
     try {
         const response = await axios.patch(`${API_BASE_URL}/api/Article/bulk/status`, {
             ids,
             status
+        }, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
         });
         // console.log(response.data);
         return response.data;
@@ -88,9 +93,9 @@ export const postCommentOrReply = async (articleId, content, token, parentId = n
 
 export const updateComment = async (commentId, token, data) => {
     try {
-        console.log("comment Id:", commentId);
-        console.log("data:", data);
-        console.log("token:", token);
+        // console.log("comment Id:", commentId);
+        // console.log("data:", data);
+        // console.log("token:", token);
 
         const response = await fetch(`${API_BASE_URL}/api/Comment/update/${commentId}`, {
             method: 'PUT',
