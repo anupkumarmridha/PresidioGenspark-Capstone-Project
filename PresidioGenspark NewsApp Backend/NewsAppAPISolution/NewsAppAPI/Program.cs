@@ -130,8 +130,16 @@ namespace NewsAppAPI
 
         private static async Task<string> GetSecretAsync(SecretClient secretClient, string secretName)
         {
-            var secret = await secretClient.GetSecretAsync(secretName);
-            return secret.Value.Value;
+            try
+            {
+                KeyVaultSecret secret = await secretClient.GetSecretAsync(secretName);
+                return secret.Value;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Request failed: {ex.Message}");
+                throw;
+            }
         }
 
 
@@ -174,7 +182,7 @@ namespace NewsAppAPI
             //var googleClientId = configuration["GoogleAuthSettings:Google:ClientId"];
             //var googleClientSecret = configuration["GoogleAuthSettings:Google:ClientSecret"];
 
-            //await Console.Out.WriteLineAsync(sqlServerConnectionString);
+            await Console.Out.WriteLineAsync(sqlServerConnectionString);
             //await Console.Out.WriteLineAsync(googleClientId);
             //await Console.Out.WriteLineAsync(googleClientSecret);
 
@@ -213,7 +221,7 @@ namespace NewsAppAPI
             builder.Services.AddLogging(l => l.AddLog4Net());
             // Add services to the container.
             await ConfigureServices(builder.Services, builder.Configuration);
-            
+
             var app = builder.Build();
 
             // Read the port from configuration
@@ -242,10 +250,10 @@ namespace NewsAppAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-     
+
             app.UseAuthentication();
             app.UseAuthorization();
-            
+
             app.UseCors("MyCors");
 
             app.MapControllers();
