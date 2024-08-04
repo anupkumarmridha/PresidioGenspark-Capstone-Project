@@ -8,6 +8,7 @@ import Filters from './Filters';
 import { toast } from 'react-toastify';
 import { useOutletContext } from 'react-router-dom';
 import Loading from '../Loading';
+import { useAuth } from '../../context/AuthContext';
 
 const categories = ["all", "business", "sports", "technology", "entertainment"];
 const truncateContent = (content) => {
@@ -35,6 +36,9 @@ const ArticleManagement = () => {
     const [totalCount, setTotalCount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const { searchQuery } = useOutletContext(); // Get search query from Outlet context
+    const { user } = useAuth();
+    const token = user?.token;
+
 
     useEffect(() => {
         console.log("Search Query:", searchQuery);
@@ -89,7 +93,7 @@ const ArticleManagement = () => {
     const confirmUpdate = async () => {
         setIsLoading(true); // Start loading for update
         try {
-            await updateArticleStatus(selectedArticles, status);
+            await updateArticleStatus(selectedArticles, status, token);
             toast.success('Articles updated successfully');
     
             // Update the local state to reflect the changes

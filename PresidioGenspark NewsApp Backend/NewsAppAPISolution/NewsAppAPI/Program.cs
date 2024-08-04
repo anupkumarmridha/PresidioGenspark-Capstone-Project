@@ -183,7 +183,7 @@ namespace NewsAppAPI
             //var googleClientId = configuration["GoogleAuthSettings:Google:ClientId"];
             //var googleClientSecret = configuration["GoogleAuthSettings:Google:ClientSecret"];
 
-            await Console.Out.WriteLineAsync(sqlServerConnectionString);
+            //await Console.Out.WriteLineAsync(sqlServerConnectionString);
             //await Console.Out.WriteLineAsync(googleClientId);
             //await Console.Out.WriteLineAsync(googleClientSecret);
 
