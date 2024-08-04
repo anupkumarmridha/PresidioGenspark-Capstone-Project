@@ -168,6 +168,7 @@ namespace NewsAppAPI
             AddJWTTokenSwaggerGen(services);
 
             // Retrieve secrets from Azure Key Vault
+
             var keyVaultName = configuration["KeyVault:Name"];
             var kvUri = $"https://{keyVaultName}.vault.azure.net/";
 

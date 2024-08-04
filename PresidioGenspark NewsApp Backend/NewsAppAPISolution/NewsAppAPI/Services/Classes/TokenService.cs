@@ -24,7 +24,12 @@ namespace NewsAppAPI.Services.Classes
         public TokenService(IConfiguration configuration)
         {
             //_secretKey = configuration.GetSection("TokenKey").GetSection("JWT").Value.ToString();
-            var secretClient = new SecretClient(new Uri(configuration["KeyVault:VaultUri"]), new DefaultAzureCredential());
+            var keyVaultName = configuration["KeyVault:Name"];
+            var kvUri = $"https://{keyVaultName}.vault.azure.net/";
+
+
+            var secretClient = new SecretClient(new Uri(kvUri), new DefaultAzureCredential());
+
             _secretKey = GetSecretAsync(secretClient, "JWT").Result;
             _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
         }
