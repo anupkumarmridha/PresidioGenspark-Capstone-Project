@@ -253,11 +253,11 @@ namespace NewsAppAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.UseCors("MyCors");
 
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseCors("MyCors");
 
             app.MapControllers();
 
