@@ -111,7 +111,7 @@ namespace NewsAppAPI
         #endregion AddJWTTokenSwaggerGen
 
         #region ValidateToken
-        private static void ValidateToken(IServiceCollection services, IConfiguration configuration)
+        private static void ValidateToken(IServiceCollection services, IConfiguration configuration, string JwtToken)
         {
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -121,7 +121,7 @@ namespace NewsAppAPI
                         ValidateIssuer = false,
                         ValidateAudience = false,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["TokenKey:JWT"]))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtToken))
                     };
 
                 });
@@ -166,14 +166,14 @@ namespace NewsAppAPI
 
             //Token operations
             AddJWTTokenSwaggerGen(services);
-            ValidateToken(services, configuration);
-
 
             // Retrieve secrets from Azure Key Vault
             var keyVaultName = configuration["KeyVault:Name"];
             var kvUri = $"https://{keyVaultName}.vault.azure.net/";
 
+           
             var secretClient = new SecretClient(new Uri(kvUri), new DefaultAzureCredential());
+            var jwtToken = await GetSecretAsync(secretClient, "JWT");
             var sqlServerConnectionString = await GetSecretAsync(secretClient, "SqlServerConnectionString");
             var googleClientId = await GetSecretAsync(secretClient, "GoogleClientId");
             var googleClientSecret = await GetSecretAsync(secretClient, "GoogleClientSecret");
@@ -191,6 +191,8 @@ namespace NewsAppAPI
             {
                 throw new Exception("SqlServerConnectionString cannot be null or empty.");
             }
+
+            ValidateToken(services, configuration, jwtToken);
 
             services.AddAuthentication().AddGoogle(googleOptions =>
             {
