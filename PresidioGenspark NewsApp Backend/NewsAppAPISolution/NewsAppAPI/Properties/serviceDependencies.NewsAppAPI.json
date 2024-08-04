@@ -1,10 +1,5 @@
 {
   "dependencies": {
-    "apis1": {
-      "apiEndpoint": "https://newsappapiapi.azure-api.net/",
-      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ApiManagement/service/NewsAppAPIapi/apis/NewsAppAPI",
-      "type": "apis.azure"
-    },
     "mssql1": {
       "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Web/sites/NewsAppAPI/providers/Microsoft.ServiceLinker/linkers/SqlServerConnectionString_77543B6A9A",
       "secretStore": null,
@@ -24,6 +19,11 @@
     "identityapp1": {
       "ignored": "true",
       "type": "identityapp"
+    },
+    "apis1": {
+      "apiEndpoint": "https://newsappapiapi.azure-api.net/",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ApiManagement/service/NewsAppAPIapi/apis/NewsAppAPI",
+      "type": "apis.azure"
     }
   }
 }
