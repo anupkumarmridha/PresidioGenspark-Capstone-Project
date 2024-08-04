@@ -14,18 +14,17 @@ using log4net.Config;
 using NewsAppAPI.Kafka.Consumers;
 using NewsAppAPI.Kafka.Producers;
 using NewsAppAPI.Cache;
+using Azure.Security.KeyVault.Secrets;
+using Azure.Identity;
 
 namespace NewsAppAPI
 {
     public class Program
     {
-        private static void AddDbContext(IServiceCollection services, IConfiguration configuration)
+        private static void AddDbContext(IServiceCollection services, IConfiguration configuration, string connectionString)
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("defaultConnection")));
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
-            Console.WriteLine($"Connection String: {connectionString}");
-
+                options.UseSqlServer(connectionString));
         }
 
         #region RegisterRepositories
@@ -129,13 +128,20 @@ namespace NewsAppAPI
         }
         #endregion ValidateToken
 
+        private static async Task<string> GetSecretAsync(SecretClient secretClient, string secretName)
+        {
+            var secret = await secretClient.GetSecretAsync(secretName);
+            return secret.Value.Value;
+        }
+
+
         #region ConfigureServices
         /// <summary>
         /// Registering Services
         /// </summary>
         /// <param name="services"></param>
         /// <param name="configuration"></param>
-        private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+        private static async Task ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
             services.AddCors(opts =>
             {
@@ -154,11 +160,36 @@ namespace NewsAppAPI
             AddJWTTokenSwaggerGen(services);
             ValidateToken(services, configuration);
 
+
+            // Retrieve secrets from Azure Key Vault
+            var keyVaultName = configuration["KeyVault:Name"];
+            var kvUri = $"https://{keyVaultName}.vault.azure.net/";
+
+            var secretClient = new SecretClient(new Uri(kvUri), new DefaultAzureCredential());
+            var sqlServerConnectionString = await GetSecretAsync(secretClient, "SqlServerConnectionString");
+            var googleClientId = await GetSecretAsync(secretClient, "GoogleClientId");
+            var googleClientSecret = await GetSecretAsync(secretClient, "GoogleClientSecret");
+
+            //var sqlServerConnectionString = configuration["ConnectionStrings:DefaultConnection"];
+            //var googleClientId = configuration["GoogleAuthSettings:Google:ClientId"];
+            //var googleClientSecret = configuration["GoogleAuthSettings:Google:ClientSecret"];
+
+            //await Console.Out.WriteLineAsync(sqlServerConnectionString);
+            //await Console.Out.WriteLineAsync(googleClientId);
+            //await Console.Out.WriteLineAsync(googleClientSecret);
+
+
+            if (string.IsNullOrEmpty(sqlServerConnectionString))
+            {
+                throw new Exception("SqlServerConnectionString cannot be null or empty.");
+            }
+
             services.AddAuthentication().AddGoogle(googleOptions =>
             {
-                googleOptions.ClientId = configuration["GoogleAuthSettings:Google:ClientId"];
-                googleOptions.ClientSecret = configuration["GoogleAuthSettings:Google:ClientSecret"];
+                googleOptions.ClientId = googleClientId;
+                googleOptions.ClientSecret = googleClientSecret;
             });
+
 
             //services.AddAuthorization(options =>
             //{
@@ -167,7 +198,7 @@ namespace NewsAppAPI
             //});
 
 
-            AddDbContext(services, configuration);
+            AddDbContext(services, configuration, sqlServerConnectionString);
 
             RegisterRepositories(services);
             RegisterServices(services);
@@ -176,14 +207,13 @@ namespace NewsAppAPI
         #endregion ConfigureServices
 
         #region Main
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddLogging(l => l.AddLog4Net());
             // Add services to the container.
-            ConfigureServices(builder.Services, builder.Configuration);
-
-
+            await ConfigureServices(builder.Services, builder.Configuration);
+            
             var app = builder.Build();
 
             // Read the port from configuration

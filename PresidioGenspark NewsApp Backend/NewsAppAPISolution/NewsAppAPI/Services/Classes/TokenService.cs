@@ -1,4 +1,6 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
+using Microsoft.IdentityModel.Tokens;
 using NewsAppAPI.DTOs;
 using NewsAppAPI.Models;
 using NewsAppAPI.Services.Interfaces;
@@ -13,10 +15,17 @@ namespace NewsAppAPI.Services.Classes
         private readonly string _secretKey;
         private readonly SymmetricSecurityKey _key;
 
+        private static async Task<string> GetSecretAsync(SecretClient secretClient, string secretName)
+        {
+            var secret = await secretClient.GetSecretAsync(secretName);
+            return secret.Value.Value;
+        }
 
         public TokenService(IConfiguration configuration)
         {
-            _secretKey = configuration.GetSection("TokenKey").GetSection("JWT").Value.ToString();
+            //_secretKey = configuration.GetSection("TokenKey").GetSection("JWT").Value.ToString();
+            var secretClient = new SecretClient(new Uri(configuration["KeyVault:VaultUri"]), new DefaultAzureCredential());
+            _secretKey = GetSecretAsync(secretClient, "JWT").Result;
             _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
         }
         public string GenerateToken(UserDto user)
