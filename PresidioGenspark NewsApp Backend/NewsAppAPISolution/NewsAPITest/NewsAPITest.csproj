@@ -25,10 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ServiceTest\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\NewsAppAPI\NewsAppAPI.csproj" />
   </ItemGroup>
 
