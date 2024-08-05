@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace NewsAPITest.ServiceTest
 {
-    internal class UserServiceTest
+    public class UserServiceTest
     {
     }
 }

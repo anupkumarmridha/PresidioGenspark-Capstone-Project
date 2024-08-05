@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using NewsAppAPI.Repositories.Interfaces;
 
 namespace NewsAPITest.RepositoryTest
 {
@@ -18,7 +19,7 @@ namespace NewsAPITest.RepositoryTest
         private Mock<ILogger<ArticleRepository>> _loggerMock;
         private DbContextOptions<AppDbContext> _dbContextOptions;
         private AppDbContext _context;
-        private ArticleRepository _articleRepository;
+        private IArticleRepository _articleRepository;
 
         [SetUp]
         public void Setup()
