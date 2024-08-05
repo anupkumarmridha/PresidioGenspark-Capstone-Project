@@ -3,11 +3,11 @@ using NUnit.Framework;
 using NewsAppAPI.Contexts;
 using NewsAppAPI.Models;
 using NewsAppAPI.Repositories.Classes;
+using NewsAppAPI.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using NewsAppAPI.Repositories.Interfaces;
 
 namespace NewsAPITest.RepositoryTest
 {
@@ -16,13 +16,12 @@ namespace NewsAPITest.RepositoryTest
         private AppDbContext _context;
         private IReactionRepository _reactionRepository;
 
-
         [SetUp]
         public void Setup()
         {
             // Use an in-memory database for testing
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "tempdata")
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // Ensure unique database name
                 .Options;
 
             _context = new AppDbContext(options);
@@ -37,48 +36,48 @@ namespace NewsAPITest.RepositoryTest
             var users = new List<User>
             {
                 new User
-                    {
-                        Id = 1,
-                        Email = "user1@example.com",
-                        DisplayName = "User1",
-                        Role = "User",
-                        GoogleId = "google-id-1",
-                        GivenName = "John",
-                        FamilyName = "Doe",
-                        Picture = "http://example.com/user1.jpg",
-                        CreatedAt = DateTime.UtcNow.AddYears(-1),
-                        UpdatedAt = DateTime.UtcNow
-                    },
-                     new User
-                    {
-                        Id = 2,
-                        Email = "user1@example2.com",
-                        DisplayName = "User12",
-                        Role = "User",
-                        GoogleId = "google-id-12",
-                        GivenName = "John2",
-                        FamilyName = "Doe2",
-                        Picture = "http://example.com/user1.jpg",
-                        CreatedAt = DateTime.UtcNow.AddYears(-2),
-                        UpdatedAt = DateTime.UtcNow
-                    }
-        };
+                {
+                    Id = 1,
+                    Email = "user1@example.com",
+                    DisplayName = "User1",
+                    Role = "User",
+                    GoogleId = "google-id-1",
+                    GivenName = "John",
+                    FamilyName = "Doe",
+                    Picture = "http://example.com/user1.jpg",
+                    CreatedAt = DateTime.UtcNow.AddYears(-1),
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new User
+                {
+                    Id = 2,
+                    Email = "user2@example.com",
+                    DisplayName = "User2",
+                    Role = "User",
+                    GoogleId = "google-id-2",
+                    GivenName = "Jane",
+                    FamilyName = "Doe",
+                    Picture = "http://example.com/user2.jpg",
+                    CreatedAt = DateTime.UtcNow.AddYears(-2),
+                    UpdatedAt = DateTime.UtcNow
+                }
+            };
 
             var articles = new List<NewsArticle>
             {
                 new NewsArticle
-                        {
-                            Id = "article-1",
-                            Author = "Jane Doe",
-                            Content = "This is the content of the article. It provides detailed information about the topic.",
-                            Date = DateTime.UtcNow.AddDays(-10),
-                            Title = "Breaking News: Example Article",
-                            ImageUrl = "http://example.com/article-image.jpg",
-                            ReadMoreUrl = "http://example.com/full-article",
-                            Status = "Approved",
-                            Category = "Technology"
-                        }
-        };
+                {
+                    Id = "article-1",
+                    Author = "Jane Doe",
+                    Content = "This is the content of the article. It provides detailed information about the topic.",
+                    Date = DateTime.UtcNow.AddDays(-10),
+                    Title = "Breaking News: Example Article",
+                    ImageUrl = "http://example.com/article-image.jpg",
+                    ReadMoreUrl = "http://example.com/full-article",
+                    Status = "Approved",
+                    Category = "Technology"
+                }
+            };
 
             _context.Users.AddRange(users);
             _context.NewsArticles.AddRange(articles);
@@ -129,7 +128,7 @@ namespace NewsAPITest.RepositoryTest
             Assert.AreEqual("article-1", result.ArticleId);
             Assert.AreEqual(ReactionType.Like, result.ReactionType);
         }
-        
+
         [Test]
         public async Task RemoveReactionAsync_ShouldRemoveReaction()
         {
@@ -186,7 +185,7 @@ namespace NewsAPITest.RepositoryTest
             // Arrange
             var reactions = new List<Reaction>
             {
-                new Reaction { ArticleId = "article-1", UserId = 1, ReactionType = ReactionType.Like},
+                new Reaction { ArticleId = "article-1", UserId = 1, ReactionType = ReactionType.Like },
                 new Reaction { ArticleId = "article-1", UserId = 2, ReactionType = ReactionType.Dislike }
             };
 
