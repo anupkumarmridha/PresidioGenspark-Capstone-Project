@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NewsAppAPI.DTOs;
 using NewsAppAPI.Services.Interfaces;
@@ -7,6 +8,7 @@ namespace NewsAppAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors("MyCors")]
     public class AuthController : ControllerBase
     {
         private readonly IUserService _userService;

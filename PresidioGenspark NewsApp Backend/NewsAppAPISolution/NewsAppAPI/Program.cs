@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -151,13 +150,13 @@ namespace NewsAppAPI
         /// <param name="configuration"></param>
         private static async Task ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddCors(opts =>
-            {
-                opts.AddPolicy("MyCors", options =>
-                {
-                    options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
-                });
-            });
+            //services.AddCors(opts =>
+            //{
+            //    opts.AddPolicy("MyCors", options =>
+            //    {
+            //        options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+            //    });
+            //});
             services.AddControllers();
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
@@ -225,8 +224,19 @@ namespace NewsAppAPI
             // Add services to the container.
             await ConfigureServices(builder.Services, builder.Configuration);
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("MyCors", builder =>
+                {
+                    builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+                });
+            });
+
             var app = builder.Build();
 
+            app.UseCors("MyCors");
             // Read the port from configuration
             //var port = builder.Configuration["Kestrel:Endpoints:Http:Url"];
             //app.Urls.Add(port);
@@ -247,13 +257,13 @@ namespace NewsAppAPI
                 }
             }
 
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            app.UseCors("MyCors");
 
             app.UseAuthentication();
             app.UseAuthorization();

@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -20,7 +21,8 @@ namespace NewsAppAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    
+    [EnableCors("MyCors")]
+
     public class CommentController : ControllerBase
     {
         private readonly ICommentService _commentService;
